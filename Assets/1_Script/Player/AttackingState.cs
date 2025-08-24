@@ -1,89 +1,74 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections;
 
 public class AttackingState : BaseState
 {
-    // Tên của trigger animation trong Animator Controller
-    private const string ATTACK_TRIGGER = "Attack";
-
-    // Tốc độ di chuyển của nhân vật
-    private float moveSpeed = 5.0f;
-
-    // Khoảng cách tối thiểu để bắt đầu tấn công
-    private float attackRange = 4.0f;
+    private Character target;
+    private float moveSpeed = 5f; // Đã thêm biến này vào đây để tránh lỗi biên dịch
 
     public AttackingState(CharacterStateMachine stateMachine) : base(stateMachine) { }
 
     public override void OnEnter()
     {
         Debug.Log(stateMachine.gameObject.name + " đang tấn công.");
+        target = stateMachine.character.target;
 
-        // Bắt đầu coroutine để xử lý việc di chuyển và tấn công
-        stateMachine.StartCoroutine(MoveAndAttack());
+        // Bắt đầu coroutine để xử lý di chuyển và tấn công
+        if (target != null)
+        {
+            stateMachine.character.StartCoroutine(MoveAndAttack());
+        }
+        else
+        {
+            Debug.LogWarning("Không có mục tiêu nào được chọn. Trở lại trạng thái chờ.");
+            stateMachine.SwitchState(stateMachine.waitingState);
+        }
     }
 
     private IEnumerator MoveAndAttack()
     {
-        // Lưu vị trí ban đầu của nhân vật
-        Vector3 startPosition = stateMachine.transform.position;
+        // Debug để kiểm tra mục tiêu có đúng không
+        Debug.Log("Mục tiêu đã được chọn: " + target.gameObject.name + " tại vị trí slot: " + stateMachine.battleManager.allCombatants.IndexOf(target));
 
-        // Kiểm tra xem có mục tiêu không
-        if (stateMachine.character.target == null)
+        Vector3 initialPosition = stateMachine.character.initialPosition;
+        Vector3 targetPosition = target.transform.position;
+        Vector3 destination = targetPosition;
+
+        // Điều chỉnh vị trí tấn công để nhân vật không đi vào trong kẻ địch
+        destination.x -= 1.5f;
+
+        // Di chuyển đến vị trí mục tiêu
+        while (Vector3.Distance(stateMachine.character.transform.position, destination) > 0.1f)
         {
-            Debug.Log("Không có mục tiêu để tấn công. Chuyển về trạng thái chờ.");
-            stateMachine.SwitchState(stateMachine.waitingState);
-            yield break; // Kết thúc coroutine
+            stateMachine.character.transform.position = Vector3.MoveTowards(
+                stateMachine.character.transform.position,
+                destination,
+                moveSpeed * Time.deltaTime
+            );
+            yield return null;
         }
+        Debug.Log(stateMachine.gameObject.name + " đã đến gần " + target.gameObject.name);
 
-        // --- LOG ĐỂ KIỂM TRA MỤC TIÊU ĐÃ CHỌN ---
-        var enemies = stateMachine.battleManager.allCombatants.FindAll(c => !c.isPlayer);
-        int targetIndex = enemies.IndexOf(stateMachine.character.target);
-        Debug.Log("Mục tiêu đã được chọn: " + stateMachine.character.target.gameObject.name + " tại vị trí slot: " + targetIndex);
+        // Thực hiện tấn công
+        Debug.Log(stateMachine.gameObject.name + " tấn công " + target.gameObject.name + " tại vị trí slot: " + stateMachine.battleManager.allCombatants.IndexOf(target));
 
-        // Vòng lặp di chuyển đến mục tiêu
-        while (Vector3.Distance(stateMachine.transform.position, stateMachine.character.target.transform.position) > attackRange)
+        // Quay về vị trí ban đầu
+        while (Vector3.Distance(stateMachine.character.transform.position, initialPosition) > 0.1f)
         {
-            // Di chuyển về phía mục tiêu
-            Vector3 targetPosition = stateMachine.character.target.transform.position;
-            Vector3 direction = (targetPosition - stateMachine.transform.position).normalized;
-            stateMachine.transform.position += direction * moveSpeed * Time.deltaTime;
-
-            // Quay mặt về phía mục tiêu
-            stateMachine.transform.LookAt(stateMachine.character.target.transform);
-
-            yield return null; // Chờ frame tiếp theo
-        }
-
-        // Đã đến gần mục tiêu, bây giờ thực hiện tấn công
-        Debug.Log(stateMachine.character.gameObject.name + " đã đến gần " + stateMachine.character.target.gameObject.name);
-
-        // Gán trigger để gọi animation tấn công
-        if (stateMachine.character.animator != null)
-        {
-            stateMachine.character.animator.SetTrigger(ATTACK_TRIGGER);
-        }
-
-        // Chờ animation tấn công kết thúc
-        yield return new WaitForSeconds(1.0f); // Thời gian của animation
-
-        // Gây sát thương
-        Debug.Log(stateMachine.character.gameObject.name + " tấn công " + stateMachine.character.target.gameObject.name + " tại vị trí slot: " + targetIndex);
-        // Gây sát thương lên mục tiêu
-        // stateMachine.character.target.stats.TakeDamage(damage);
-
-        // Quay trở về vị trí ban đầu
-        while (Vector3.Distance(stateMachine.transform.position, startPosition) > 0.1f)
-        {
-            stateMachine.transform.position = Vector3.MoveTowards(stateMachine.transform.position, startPosition, moveSpeed * Time.deltaTime);
+            stateMachine.character.transform.position = Vector3.MoveTowards(
+                stateMachine.character.transform.position,
+                initialPosition,
+                moveSpeed * Time.deltaTime
+            );
             yield return null;
         }
 
-        // Sau khi hoàn thành, chuyển lại về trạng thái chờ
-        stateMachine.SwitchState(stateMachine.waitingState);
+        // Kết thúc lượt của nhân vật hiện tại
+        stateMachine.battleManager.EndTurn(stateMachine.character);
     }
 
-    public override void OnUpdate()
+    public override void OnExit()
     {
-        // Không làm gì ở đây vì logic được xử lý trong coroutine
+        // Có thể thêm logic dọn dẹp ở đây nếu cần
     }
 }

@@ -901,14 +901,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   allCombatants: []
   activeCharacter: {fileID: 0}
-  playerPrefab: {fileID: 7476097214805250413, guid: 5ce60ffb3c3455b4ab804375a4863659, type: 3}
-  enemyPrefabs:
-  - {fileID: 3404509342006786628, guid: 6922e6106dbc662459d0412099235b52, type: 3}
-  - {fileID: 3404509342006786628, guid: 6922e6106dbc662459d0412099235b52, type: 3}
-  playerSpawnPoint: {fileID: 346027862}
-  enemySpawnPoints:
+  playerPrefab: {fileID: 3404509342006786628, guid: 6922e6106dbc662459d0412099235b52, type: 3}
+  enemySlots:
   - {fileID: 847219007}
   - {fileID: 472167580}
+  enemyPrefabs:
+  - {fileID: -5687909505730138963, guid: 1135f6c68f0168748898ba9c25cb213c, type: 3}
+  - {fileID: -5687909505730138963, guid: 1135f6c68f0168748898ba9c25cb213c, type: 3}
+  playerSpawnPoint: {fileID: 346027862}
   playerActionUI: {fileID: 277040182}
 --- !u!4 &498165807
 Transform:
@@ -1968,8 +1968,8 @@ SceneRoots:
   - {fileID: 1524740327}
   - {fileID: 832575519}
   - {fileID: 37184489}
-  - {fileID: 498165807}
   - {fileID: 346027862}
   - {fileID: 847219007}
   - {fileID: 472167580}
+  - {fileID: 498165807}
   - {fileID: 277040186}

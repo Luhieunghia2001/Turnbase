@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
-// Trạng thái sẵn sàng hành động, giờ có cả chức năng chọn mục tiêu
 public class ReadyState : BaseState
 {
     private List<Character> enemies;
@@ -14,10 +12,12 @@ public class ReadyState : BaseState
     {
         Debug.Log(stateMachine.gameObject.name + " đã sẵn sàng hành động.");
 
+        // Reset mục tiêu cũ để tránh lỗi ở những lượt sau
+        stateMachine.character.target = null;
+
         // Lấy danh sách kẻ địch
         enemies = stateMachine.battleManager.allCombatants.FindAll(c => !c.isPlayer);
 
-        // Đặt mục tiêu mặc định là kẻ địch đầu tiên
         if (enemies.Count > 0)
         {
             currentIndex = 0;
@@ -28,7 +28,6 @@ public class ReadyState : BaseState
             stateMachine.character.target = null;
         }
 
-        // Hiển thị dấu hiệu mục tiêu
         UpdateTargetMarkerDisplay();
     }
 
@@ -37,46 +36,35 @@ public class ReadyState : BaseState
         // Xử lý phím 'A' để chuyển đến mục tiêu trước đó
         if (Input.GetKeyDown(KeyCode.A))
         {
-            if (enemies.Count > 0)
-            {
-                currentIndex--;
-                if (currentIndex < 0)
-                {
-                    currentIndex = enemies.Count - 1;
-                }
-                stateMachine.character.target = enemies[currentIndex];
-                UpdateTargetMarkerDisplay();
-                Debug.Log("Đã chuyển mục tiêu sang: " + enemies[currentIndex].gameObject.name + " tại vị trí slot: " + currentIndex);
-            }
+            UpdateTarget(-1);
         }
 
         // Xử lý phím 'D' để chuyển đến mục tiêu kế tiếp
         if (Input.GetKeyDown(KeyCode.D))
         {
-            if (enemies.Count > 0)
-            {
-                currentIndex++;
-                if (currentIndex >= enemies.Count)
-                {
-                    currentIndex = 0;
-                }
-                stateMachine.character.target = enemies[currentIndex];
-                UpdateTargetMarkerDisplay();
-                Debug.Log("Đã chuyển mục tiêu sang: " + enemies[currentIndex].gameObject.name + " tại vị trí slot: " + currentIndex);
-            }
+            UpdateTarget(1);
         }
+    }
 
-        // Logic tấn công bằng phím Enter và chuột đã được loại bỏ.
+    private void UpdateTarget(int direction)
+    {
+        if (enemies.Count > 0)
+        {
+            currentIndex = (currentIndex + direction + enemies.Count) % enemies.Count;
+            stateMachine.character.target = enemies[currentIndex];
+            UpdateTargetMarkerDisplay();
+            Debug.Log("Đã chuyển mục tiêu sang: " + enemies[currentIndex].gameObject.name + " tại vị trí slot: " + currentIndex);
+        }
     }
 
     public override void OnExit()
     {
-        // Ẩn tất cả các dấu hiệu mục tiêu khi thoát trạng thái
         if (enemies != null)
         {
             foreach (Character enemy in enemies)
             {
-                if (enemy.targetMarker != null)
+                // Thêm kiểm tra null cho chính đối tượng enemy
+                if (enemy != null && enemy.targetMarker != null)
                 {
                     enemy.targetMarker.SetActive(false);
                 }
@@ -88,7 +76,8 @@ public class ReadyState : BaseState
     {
         for (int i = 0; i < enemies.Count; i++)
         {
-            if (enemies[i].targetMarker != null)
+            // Thêm kiểm tra null cho chính đối tượng enemies[i]
+            if (enemies[i] != null && enemies[i].targetMarker != null)
             {
                 enemies[i].targetMarker.SetActive(i == currentIndex);
             }

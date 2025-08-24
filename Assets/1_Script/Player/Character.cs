@@ -28,12 +28,20 @@ public class CharacterStats
 public class Character : MonoBehaviour
 {
     public CharacterStateMachine stateMachine;
+
     public CharacterStats stats;
     public bool isPlayer;
     public Character target;
     public GameObject targetMarker; // Thêm trường này để tham chiếu đến GameObject đánh dấu mục tiêu
     
     public Animator animator;
+
+    public Vector3 initialPosition;
+
+    public bool isAlive
+    {
+        get { return stats.currentHP > 0; }
+    }
 
 
     void Awake()
