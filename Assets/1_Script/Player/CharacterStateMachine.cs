@@ -19,7 +19,6 @@ public class CharacterStateMachine : MonoBehaviour
     public DeadState deadState;
     public ParryingState parryingState;
     public InterruptedState interruptedState;
-    public TargetingState targetingState; // Thêm trạng thái chọn mục tiêu
 
     private void Awake()
     {
@@ -36,7 +35,6 @@ public class CharacterStateMachine : MonoBehaviour
         deadState = new DeadState(this);
         parryingState = new ParryingState(this);
         interruptedState = new InterruptedState(this);
-        targetingState = new TargetingState(this); // Khởi tạo trạng thái mới
     }
 
     void Start()

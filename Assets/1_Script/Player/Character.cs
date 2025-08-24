@@ -32,6 +32,9 @@ public class Character : MonoBehaviour
     public bool isPlayer;
     public Character target;
     public GameObject targetMarker; // Thêm trường này để tham chiếu đến GameObject đánh dấu mục tiêu
+    
+    public Animator animator;
+
 
     void Awake()
     {

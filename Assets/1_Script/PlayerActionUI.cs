@@ -39,9 +39,8 @@ public class PlayerActionUI : MonoBehaviour
     {
         if (battleManager.activeCharacter != null && battleManager.activeCharacter.isPlayer)
         {
-            // Thay đổi: Bây giờ chúng ta sẽ chuyển sang trạng thái chọn mục tiêu
-            // BattleManager sẽ xử lý việc hiển thị các lựa chọn mục tiêu
-            battleManager.activeCharacter.stateMachine.SwitchState(battleManager.activeCharacter.stateMachine.targetingState);
+            // Bây giờ nút tấn công sẽ chuyển thẳng đến AttackingState
+            battleManager.activeCharacter.stateMachine.SwitchState(battleManager.activeCharacter.stateMachine.attackingState);
         }
     }
 

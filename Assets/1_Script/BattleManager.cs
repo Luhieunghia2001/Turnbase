@@ -59,10 +59,11 @@ public class BattleManager : MonoBehaviour
                     // Hiển thị UI cho người chơi
                     if (activeCharacter.isPlayer)
                     {
-                        // Chuyển sang trạng thái chọn mục tiêu ngay lập tức
-                        activeCharacter.stateMachine.SwitchState(activeCharacter.stateMachine.targetingState);
+                        playerActionUI.Show();
                     }
 
+                    // Loại bỏ dòng lệnh này để tránh xung đột
+                    // activeCharacter.stateMachine.SwitchState(activeCharacter.stateMachine.targetingState);
                     break;
                 }
             }
