@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class ReadyState : BaseState
 {
@@ -12,6 +13,9 @@ public class ReadyState : BaseState
     {
         Debug.Log(stateMachine.gameObject.name + " đã sẵn sàng hành động.");
 
+        // Ẩn tất cả các marker trước khi vào trạng thái
+        ShowTargetMarker(false);
+
         stateMachine.character.target = null;
 
         enemies = stateMachine.battleManager.allCombatants.FindAll(c => !c.isPlayer);
@@ -20,25 +24,35 @@ public class ReadyState : BaseState
         {
             currentIndex = 0;
             stateMachine.character.target = enemies[currentIndex];
+            // Chỉ hiển thị marker cho mục tiêu mặc định
+            if (stateMachine.character.isPlayer)
+            {
+                if (enemies[currentIndex].targetMarker != null)
+                {
+                    enemies[currentIndex].targetMarker.SetActive(true);
+                }
+            }
         }
         else
         {
             stateMachine.character.target = null;
         }
-
-        UpdateTargetMarkerDisplay();
     }
 
     public override void OnUpdate()
     {
-        if (Input.GetKeyDown(KeyCode.A))
+        // Kiểm tra xem nhân vật có phải là người chơi không trước khi xử lý input
+        if (stateMachine.character.isPlayer)
         {
-            UpdateTarget(-1);
-        }
+            if (Input.GetKeyDown(KeyCode.A))
+            {
+                UpdateTarget(-1);
+            }
 
-        if (Input.GetKeyDown(KeyCode.D))
-        {
-            UpdateTarget(1);
+            if (Input.GetKeyDown(KeyCode.D))
+            {
+                UpdateTarget(1);
+            }
         }
     }
 
@@ -46,14 +60,35 @@ public class ReadyState : BaseState
     {
         if (enemies.Count > 0)
         {
+            // Ẩn marker của mục tiêu hiện tại trước khi chuyển đổi
+            if (stateMachine.character.target != null && stateMachine.character.target.targetMarker != null)
+            {
+                stateMachine.character.target.targetMarker.SetActive(false);
+            }
+
             currentIndex = (currentIndex + direction + enemies.Count) % enemies.Count;
             stateMachine.character.target = enemies[currentIndex];
-            UpdateTargetMarkerDisplay();
             Debug.Log("Đã chuyển mục tiêu sang: " + enemies[currentIndex].gameObject.name + " tại vị trí slot: " + currentIndex);
+
+            // Hiển thị marker cho mục tiêu mới
+            if (stateMachine.character.target != null && stateMachine.character.target.targetMarker != null)
+            {
+                stateMachine.character.target.targetMarker.SetActive(true);
+            }
         }
     }
 
     public override void OnExit()
+    {
+        // Ẩn tất cả các target marker khi thoát khỏi trạng thái
+        ShowTargetMarker(false);
+    }
+
+    /// <summary>
+    /// Hiển thị hoặc ẩn tất cả các target marker của kẻ địch.
+    /// </summary>
+    /// <param name="active">Giá trị true để hiển thị, false để ẩn.</param>
+    private void ShowTargetMarker(bool active)
     {
         if (enemies != null)
         {
@@ -61,19 +96,8 @@ public class ReadyState : BaseState
             {
                 if (enemy != null && enemy.targetMarker != null)
                 {
-                    enemy.targetMarker.SetActive(false);
+                    enemy.targetMarker.SetActive(active);
                 }
-            }
-        }
-    }
-
-    private void UpdateTargetMarkerDisplay()
-    {
-        for (int i = 0; i < enemies.Count; i++)
-        {
-            if (enemies[i] != null && enemies[i].targetMarker != null)
-            {
-                enemies[i].targetMarker.SetActive(i == currentIndex);
             }
         }
     }

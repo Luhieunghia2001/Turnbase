@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using System.Linq; // Thêm thư viện Linq
-using TMPro; // Thêm thư viện TextMeshPro
+using System.Linq;
+using TMPro;
 using UnityEngine.UI;
 
 // Script này quản lý giao diện hiển thị thứ tự lượt đi
@@ -24,7 +24,7 @@ public class TurnOrderUI : MonoBehaviour
     {
         // Sắp xếp các nhân vật theo thanh hành động giảm dần
         // Điều này đảm bảo rằng người có thanh hành động cao nhất sẽ hiển thị đầu tiên
-        List<Character> sortedCharacters = characters.OrderByDescending(c => c.actionGauge).ToList();
+        List<Character> sortedCharacters = characters.Where(c => c.isAlive).OrderByDescending(c => c.actionGauge).ToList();
 
         // Xóa tất cả các icon cũ
         foreach (var icon in turnOrderIcons)
@@ -37,12 +37,6 @@ public class TurnOrderUI : MonoBehaviour
         foreach (Character character in sortedCharacters)
         {
             GameObject icon = Instantiate(turnOrderIconPrefab, turnOrderContainer);
-            // Lấy component TextMeshProUGUI trên icon và gán tên nhân vật
-            TextMeshProUGUI iconText = icon.GetComponentInChildren<TextMeshProUGUI>();
-            if (iconText != null)
-            {
-                iconText.text = character.gameObject.name;
-            }
             turnOrderIcons.Add(icon);
         }
     }
@@ -53,23 +47,22 @@ public class TurnOrderUI : MonoBehaviour
     /// <param name="activeCharacter">Nhân vật đang có lượt đi.</param>
     public void HighlightActiveCharacter(Character activeCharacter)
     {
+        // Đặt lại kích thước cho tất cả các icon về trạng thái ban đầu trước
+        foreach (var icon in turnOrderIcons)
+        {
+            icon.transform.localScale = Vector3.one;
+        }
+
         // Vòng lặp để làm nổi bật icon của nhân vật đang hoạt động
         for (int i = 0; i < turnOrderIcons.Count; i++)
         {
             // So sánh tên của nhân vật trong UI với tên của nhân vật đang hoạt động
+            // Hiện tại, chúng ta vẫn dùng tên để đơn giản hóa
             if (turnOrderIcons[i].GetComponentInChildren<TextMeshProUGUI>().text == activeCharacter.gameObject.name)
             {
                 // Thay đổi kích thước hoặc màu sắc để làm nổi bật
                 turnOrderIcons[i].transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
-
-                // Bạn có thể thêm các hiệu ứng khác ở đây, ví dụ như thay đổi màu
-                // turnOrderIcons[i].GetComponent<Image>().color = Color.yellow;
-            }
-            else
-            {
-                // Đặt lại kích thước hoặc màu sắc ban đầu
-                turnOrderIcons[i].transform.localScale = Vector3.one;
-                // turnOrderIcons[i].GetComponent<Image>().color = Color.white;
+                break; // Thêm break để chỉ làm nổi bật icon đầu tiên tìm thấy
             }
         }
     }
@@ -83,10 +76,22 @@ public class TurnOrderUI : MonoBehaviour
         // Cập nhật lại UI dựa trên danh sách đã sắp xếp
         UpdateTurnQueue(sortedCharacters);
 
-        // Tùy chọn: Thêm một vòng lặp để cập nhật thanh tiến trình nếu bạn có
-        // foreach (var character in characters)
-        // {
-        //     // Tìm icon của nhân vật và cập nhật thanh tiến trình của nó
-        // }
+        // Cập nhật văn bản cho mỗi nhân vật
+        for (int i = 0; i < sortedCharacters.Count; i++)
+        {
+            TextMeshProUGUI[] texts = turnOrderIcons[i].GetComponentsInChildren<TextMeshProUGUI>();
+
+            if (texts.Length > 0)
+            {
+                // Component đầu tiên để hiển thị tên
+                texts[0].text = sortedCharacters[i].gameObject.name;
+
+                // Nếu có component thứ hai, dùng để hiển thị điểm hành động
+                if (texts.Length > 1)
+                {
+                    texts[1].text = Mathf.RoundToInt(sortedCharacters[i].actionGauge).ToString();
+                }
+            }
+        }
     }
 }
