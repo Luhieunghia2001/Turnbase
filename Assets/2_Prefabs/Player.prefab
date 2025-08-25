@@ -2223,12 +2223,14 @@ MonoBehaviour:
     defense: 153
     magicAttack: 154
     magicDefense: 139
-    agility: 73
+    agility: 169
   isPlayer: 1
   target: {fileID: 0}
   targetMarker: {fileID: 0}
   animator: {fileID: 3378854915989972298}
+  actionGauge: 0
   initialPosition: {x: 0, y: 0, z: 0}
+  battleManager: {fileID: 0}
 --- !u!114 &6007067907109271698
 MonoBehaviour:
   m_ObjectHideFlags: 0

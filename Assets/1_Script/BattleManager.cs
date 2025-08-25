@@ -5,53 +5,62 @@ using System.Collections;
 
 public class BattleManager : MonoBehaviour
 {
+    // Danh sách tất cả các nhân vật tham gia trận chiến (bao gồm cả người chơi và kẻ địch)
     public List<Character> allCombatants = new List<Character>();
 
+    // Biến để theo dõi lượt của ai
     public Character activeCharacter;
 
+    // Thêm biến cờ để tránh xử lý nhiều lượt cùng lúc
+    private bool isProcessingTurn = false;
+
+    // --- Các Prefab và vị trí Spawn ---
     public Character playerPrefab;
 
+    // Mảng các vị trí cố định cho kẻ địch, có thể kéo thả từ Inspector
     public Transform[] enemySlots;
     public Character[] enemyPrefabs;
 
     public Transform playerSpawnPoint;
 
+    // Tham chiếu UI
     public PlayerActionUI playerActionUI;
+    public TurnOrderUI turnOrderUI; // Thêm tham chiếu đến script UI mới
 
     void Start()
     {
+        // Khởi tạo trận chiến
         SetupBattle();
-
-        StartCoroutine(StartTurnCycleAfterDelay());
-    }
-
-    IEnumerator StartTurnCycleAfterDelay()
-    {
-        Debug.Log("Đang đợi một frame để bắt đầu vòng lặp lượt chơi.");
-        yield return new WaitForEndOfFrame(); 
-        StartTurnCycle();
-        Debug.Log("Vòng lặp lượt chơi đã bắt đầu.");
+        // Bắt đầu Coroutine sau khi tất cả các nhân vật đã được khởi tạo
+        StartCoroutine(UpdateActionGauge());
     }
 
     void SetupBattle()
     {
-        Debug.Log("Đang thiết lập trận chiến.");
+        // Khởi tạo danh sách nhân vật
+        allCombatants = new List<Character>();
+
+        // 1. Spawn nhân vật người chơi
         if (playerPrefab != null && playerSpawnPoint != null)
         {
             Character playerInstance = Instantiate(playerPrefab, playerSpawnPoint.position, Quaternion.identity);
-            allCombatants.Add(playerInstance);
-            playerInstance.initialPosition = playerSpawnPoint.position;
-
-            CharacterStateMachine playerStateMachine = playerInstance.GetComponent<CharacterStateMachine>();
-            if (playerStateMachine != null)
+            if (playerInstance != null)
             {
-                playerStateMachine.battleManager = this;
-                playerStateMachine.SwitchState(playerStateMachine.waitingState);
-            }
+                playerInstance.isPlayer = true; // Thêm dòng này để đánh dấu là người chơi
+                allCombatants.Add(playerInstance);
+                playerInstance.initialPosition = playerSpawnPoint.position;
+                playerInstance.battleManager = this; // Gán tham chiếu BattleManager
 
-            Debug.Log("Người chơi đã được tạo và thêm vào danh sách.");
+                // Gán tham chiếu cho state machine
+                CharacterStateMachine playerStateMachine = playerInstance.GetComponent<CharacterStateMachine>();
+                if (playerStateMachine != null)
+                {
+                    playerStateMachine.battleManager = this;
+                }
+            }
         }
 
+        // 2. Spawn kẻ địch
         if (enemySlots.Length > 0 && enemyPrefabs.Length > 0)
         {
             for (int i = 0; i < enemySlots.Length && i < enemyPrefabs.Length; i++)
@@ -59,66 +68,139 @@ public class BattleManager : MonoBehaviour
                 if (enemySlots[i] != null && enemyPrefabs[i] != null)
                 {
                     Character enemyInstance = Instantiate(enemyPrefabs[i], enemySlots[i].position, Quaternion.identity);
-                    allCombatants.Add(enemyInstance);
-                    enemyInstance.initialPosition = enemySlots[i].position;
-
-                    CharacterStateMachine enemyStateMachine = enemyInstance.GetComponent<CharacterStateMachine>();
-                    if (enemyStateMachine != null)
+                    if (enemyInstance != null)
                     {
-                        enemyStateMachine.battleManager = this;
-                        enemyStateMachine.SwitchState(enemyStateMachine.waitingState);
-                    }
+                        enemyInstance.isPlayer = false; // Thêm dòng này để đánh dấu là kẻ địch
+                        allCombatants.Add(enemyInstance);
+                        enemyInstance.initialPosition = enemySlots[i].position;
+                        enemyInstance.battleManager = this; // Gán tham chiếu BattleManager
 
-                    Debug.Log("Kẻ địch " + enemyInstance.gameObject.name + " đã được tạo.");
-                }
-                else
-                {
-                    Debug.LogError("Lỗi: enemySlots[" + i + "] hoặc enemyPrefabs[" + i + "] bị null trong Inspector. Vui lòng kiểm tra lại!");
+                        // Gán tham chiếu cho state machine
+                        CharacterStateMachine enemyStateMachine = enemyInstance.GetComponent<CharacterStateMachine>();
+                        if (enemyStateMachine != null)
+                        {
+                            enemyStateMachine.battleManager = this;
+                        }
+                    }
                 }
             }
         }
 
-        allCombatants = allCombatants.OrderBy(c => c.transform.position.x).ToList();
-        Debug.Log("Danh sách nhân vật đã được sắp xếp. Tổng số nhân vật: " + allCombatants.Count);
+        // Khởi tạo trạng thái ban đầu cho tất cả nhân vật
+        foreach (Character combatant in allCombatants)
+        {
+            if (combatant.stateMachine != null)
+            {
+                combatant.stateMachine.SwitchState(combatant.stateMachine.waitingState);
+                combatant.actionGauge = 0; // Đặt lại thanh hành động
+            }
+            // Thêm log để xác nhận tất cả nhân vật đã được thêm vào và actionGauge đã được đặt lại
+            Debug.Log($"Đã thêm {combatant.gameObject.name} vào trận chiến. Action Gauge ban đầu: {combatant.actionGauge}");
+        }
     }
 
-    private void StartTurnCycle()
+    // Coroutine để cập nhật thanh hành động mỗi frame
+    private IEnumerator UpdateActionGauge()
     {
-        AdvanceTurn();
+        // Thêm độ trễ ban đầu để game khởi tạo đầy đủ
+        yield return new WaitForSeconds(0.5f);
+
+        while (true)
+        {
+            // Chỉ chạy khi không có nhân vật nào đang hành động và không có lượt nào đang được xử lý
+            if (activeCharacter == null && !isProcessingTurn)
+            {
+                bool someoneReady = false;
+                foreach (var combatant in allCombatants)
+                {
+                    if (combatant.isAlive)
+                    {
+                        combatant.actionGauge += combatant.stats.agility * Time.deltaTime;
+
+                        // Log giá trị actionGauge của mỗi nhân vật
+
+                        // Kiểm tra nếu có ai đó đã sẵn sàng để hành động
+                        if (combatant.actionGauge >= 100 && combatant.stateMachine.currentState is WaitingState)
+                        {
+                            someoneReady = true;
+                        }
+                    }
+                }
+
+                // Cập nhật giao diện UI của TurnOrder
+                if (turnOrderUI != null)
+                {
+                    turnOrderUI.UpdateActionGaugeUI(allCombatants);
+                }
+
+                if (someoneReady)
+                {
+                    // Đặt cờ để ngăn các lượt khác chạy song song
+                    isProcessingTurn = true;
+                    // Lấy danh sách các nhân vật đã sẵn sàng và sắp xếp theo thanh hành động giảm dần
+                    var readyCharacters = allCombatants.Where(c => c.actionGauge >= 100 && c.isAlive).OrderByDescending(c => c.actionGauge).ToList();
+                    if (readyCharacters.Any())
+                    {
+                        // Log nhân vật chuẩn bị hành động và actionGauge của họ
+                        Debug.Log($"Nhân vật sắp hành động: {readyCharacters.First().gameObject.name} với actionGauge: {readyCharacters.First().actionGauge}");
+                        // Chuyển lượt cho nhân vật có thanh hành động cao nhất
+                        AdvanceTurn(readyCharacters.First());
+                    }
+                }
+            }
+            yield return null;
+        }
     }
 
-    public void AdvanceTurn()
+    public void AdvanceTurn(Character characterToAct)
     {
-        Debug.Log("Gọi AdvanceTurn().");
-
+        // activeCharacter được đặt trong phương thức này, nên chỉ cần kiểm tra một lần duy nhất
         if (activeCharacter != null)
         {
-            Debug.Log("Đã có activeCharacter, không chuyển lượt.");
             return;
         }
 
-        foreach (Character combatant in allCombatants)
+        activeCharacter = characterToAct;
+        Debug.Log($"Kiểm tra nhân vật: {activeCharacter.gameObject.name}");
+
+        // Chuyển sang trạng thái sẵn sàng
+        activeCharacter.stateMachine.SwitchState(activeCharacter.stateMachine.readyState);
+
+        // Cập nhật giao diện người dùng
+        if (turnOrderUI != null)
         {
-            if (combatant.stats == null || !combatant.isAlive) continue;
-
-            Debug.Log("Kiểm tra " + combatant.gameObject.name + ". Trạng thái hiện tại: " + combatant.stateMachine.currentState.GetType().Name);
-
-            if (combatant.stateMachine.currentState is WaitingState)
-            {
-                combatant.stateMachine.SwitchState(combatant.stateMachine.readyState);
-                activeCharacter = combatant;
-                Debug.Log("Đến lượt của " + activeCharacter.gameObject.name);
-
-                if (activeCharacter.isPlayer)
-                {
-                    playerActionUI.Show();
-                }
-
-                return;
-            }
+            turnOrderUI.HighlightActiveCharacter(activeCharacter);
         }
 
-        Debug.LogWarning("Không tìm thấy nhân vật nào ở trạng thái WaitingState. activeCharacter vẫn null.");
+        if (activeCharacter.isPlayer)
+        {
+            playerActionUI.Show();
+        }
+        else // Đây là lượt của kẻ địch
+        {
+            StartCoroutine(EnemyTurn(activeCharacter)); // Truyền activeCharacter vào coroutine
+        }
+    }
+
+    // Coroutine mới để xử lý lượt của kẻ địch
+    private IEnumerator EnemyTurn(Character enemy)
+    {
+        Debug.Log("Đến lượt của kẻ địch: " + enemy.gameObject.name);
+
+        // Chờ một chút để người chơi thấy lượt của kẻ địch
+        yield return new WaitForSeconds(1f);
+
+        // Giả sử kẻ địch có một phương thức để thực hiện hành động
+        Enemy enemyComponent = enemy.GetComponent<Enemy>();
+        if (enemyComponent != null)
+        {
+            enemyComponent.PerformTurn();
+        }
+
+        // Chờ một chút trước khi kết thúc lượt
+        yield return new WaitForSeconds(2f);
+
+        EndTurn(enemy);
     }
 
     public void EndTurn(Character character)
@@ -129,9 +211,11 @@ public class BattleManager : MonoBehaviour
             if (character.stateMachine != null)
             {
                 character.stateMachine.SwitchState(character.stateMachine.waitingState);
+                character.actionGauge = 0; // Đặt lại thanh hành động
             }
+            // Đặt lại cờ để cho phép lượt tiếp theo bắt đầu
+            isProcessingTurn = false;
         }
-        AdvanceTurn();
     }
 
     public void RemoveCombatant(Character character)

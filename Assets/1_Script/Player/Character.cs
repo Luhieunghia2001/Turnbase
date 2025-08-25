@@ -33,10 +33,15 @@ public class Character : MonoBehaviour
     public bool isPlayer;
     public Character target;
     public GameObject targetMarker;
-    
+
     public Animator animator;
 
+    public float actionGauge;
+
+
     public Vector3 initialPosition;
+
+    public BattleManager battleManager;
 
     public bool isAlive
     {

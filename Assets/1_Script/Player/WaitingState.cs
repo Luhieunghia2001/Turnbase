@@ -1,26 +1,24 @@
-﻿// Trạng thái chờ lượt
-using UnityEngine;
+﻿using UnityEngine;
 
+// Trạng thái chờ lượt
 public class WaitingState : BaseState
 {
-    private float actionPoints;
-
     public WaitingState(CharacterStateMachine stateMachine) : base(stateMachine) { }
 
     public override void OnEnter()
     {
-        actionPoints = 0;
         Debug.Log(stateMachine.gameObject.name + " đã bắt đầu chờ lượt.");
     }
 
     public override void OnUpdate()
     {
-        // Tăng điểm hành động dựa trên chỉ số agility
-        actionPoints += stateMachine.character.stats.agility * Time.deltaTime;
+        // Loại bỏ logic tự động chuyển trạng thái khỏi đây.
+        // WaitingState chỉ đơn giản là chờ đợi.
+        // BattleManager sẽ chịu trách nhiệm chuyển trạng thái khi đến lượt của nhân vật.
+    }
 
-        if (actionPoints >= 100)
-        {
-            stateMachine.SwitchState(stateMachine.readyState);
-        }
+    public override void OnExit()
+    {
+        Debug.Log(stateMachine.gameObject.name + " đã kết thúc chờ lượt.");
     }
 }
