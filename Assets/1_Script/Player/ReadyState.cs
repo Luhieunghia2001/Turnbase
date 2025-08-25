@@ -12,10 +12,8 @@ public class ReadyState : BaseState
     {
         Debug.Log(stateMachine.gameObject.name + " đã sẵn sàng hành động.");
 
-        // Reset mục tiêu cũ để tránh lỗi ở những lượt sau
         stateMachine.character.target = null;
 
-        // Lấy danh sách kẻ địch
         enemies = stateMachine.battleManager.allCombatants.FindAll(c => !c.isPlayer);
 
         if (enemies.Count > 0)
@@ -33,13 +31,11 @@ public class ReadyState : BaseState
 
     public override void OnUpdate()
     {
-        // Xử lý phím 'A' để chuyển đến mục tiêu trước đó
         if (Input.GetKeyDown(KeyCode.A))
         {
             UpdateTarget(-1);
         }
 
-        // Xử lý phím 'D' để chuyển đến mục tiêu kế tiếp
         if (Input.GetKeyDown(KeyCode.D))
         {
             UpdateTarget(1);
@@ -63,7 +59,6 @@ public class ReadyState : BaseState
         {
             foreach (Character enemy in enemies)
             {
-                // Thêm kiểm tra null cho chính đối tượng enemy
                 if (enemy != null && enemy.targetMarker != null)
                 {
                     enemy.targetMarker.SetActive(false);
@@ -76,7 +71,6 @@ public class ReadyState : BaseState
     {
         for (int i = 0; i < enemies.Count; i++)
         {
-            // Thêm kiểm tra null cho chính đối tượng enemies[i]
             if (enemies[i] != null && enemies[i].targetMarker != null)
             {
                 enemies[i].targetMarker.SetActive(i == currentIndex);

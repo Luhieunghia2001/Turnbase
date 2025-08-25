@@ -32,7 +32,7 @@ public class Character : MonoBehaviour
     public CharacterStats stats;
     public bool isPlayer;
     public Character target;
-    public GameObject targetMarker; // Thêm trường này để tham chiếu đến GameObject đánh dấu mục tiêu
+    public GameObject targetMarker;
     
     public Animator animator;
 
@@ -46,7 +46,6 @@ public class Character : MonoBehaviour
 
     void Awake()
     {
-        // Lấy tham chiếu đến CharacterStateMachine được gắn trên cùng GameObject
         stateMachine = GetComponent<CharacterStateMachine>();
     }
 }

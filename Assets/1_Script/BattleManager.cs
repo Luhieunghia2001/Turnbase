@@ -5,37 +5,30 @@ using System.Collections;
 
 public class BattleManager : MonoBehaviour
 {
-    // Danh sách tất cả các nhân vật tham gia trận chiến (bao gồm cả người chơi và kẻ địch)
     public List<Character> allCombatants = new List<Character>();
 
-    // Biến để theo dõi lượt của ai
     public Character activeCharacter;
 
-    // --- Các Prefab và vị trí Spawn ---
     public Character playerPrefab;
 
-    // Mảng các vị trí cố định cho kẻ địch, có thể kéo thả từ Inspector
     public Transform[] enemySlots;
     public Character[] enemyPrefabs;
 
     public Transform playerSpawnPoint;
 
-    // Tham chiếu UI
     public PlayerActionUI playerActionUI;
 
     void Start()
     {
-        // Khởi tạo trận chiến
         SetupBattle();
 
-        // Dùng Coroutine để trì hoãn một chút, đảm bảo tất cả các Start() đã chạy xong
         StartCoroutine(StartTurnCycleAfterDelay());
     }
 
     IEnumerator StartTurnCycleAfterDelay()
     {
         Debug.Log("Đang đợi một frame để bắt đầu vòng lặp lượt chơi.");
-        yield return new WaitForEndOfFrame(); // Đợi đến cuối frame, đảm bảo tất cả các Start() đã hoàn thành
+        yield return new WaitForEndOfFrame(); 
         StartTurnCycle();
         Debug.Log("Vòng lặp lượt chơi đã bắt đầu.");
     }
@@ -43,14 +36,12 @@ public class BattleManager : MonoBehaviour
     void SetupBattle()
     {
         Debug.Log("Đang thiết lập trận chiến.");
-        // 1. Spawn nhân vật người chơi
         if (playerPrefab != null && playerSpawnPoint != null)
         {
             Character playerInstance = Instantiate(playerPrefab, playerSpawnPoint.position, Quaternion.identity);
             allCombatants.Add(playerInstance);
             playerInstance.initialPosition = playerSpawnPoint.position;
 
-            // Lấy tham chiếu đến state machine và battle manager
             CharacterStateMachine playerStateMachine = playerInstance.GetComponent<CharacterStateMachine>();
             if (playerStateMachine != null)
             {
@@ -61,7 +52,6 @@ public class BattleManager : MonoBehaviour
             Debug.Log("Người chơi đã được tạo và thêm vào danh sách.");
         }
 
-        // 2. Spawn kẻ địch
         if (enemySlots.Length > 0 && enemyPrefabs.Length > 0)
         {
             for (int i = 0; i < enemySlots.Length && i < enemyPrefabs.Length; i++)
@@ -72,7 +62,6 @@ public class BattleManager : MonoBehaviour
                     allCombatants.Add(enemyInstance);
                     enemyInstance.initialPosition = enemySlots[i].position;
 
-                    // Lấy tham chiếu đến state machine và battle manager
                     CharacterStateMachine enemyStateMachine = enemyInstance.GetComponent<CharacterStateMachine>();
                     if (enemyStateMachine != null)
                     {
@@ -89,7 +78,6 @@ public class BattleManager : MonoBehaviour
             }
         }
 
-        // Sắp xếp danh sách
         allCombatants = allCombatants.OrderBy(c => c.transform.position.x).ToList();
         Debug.Log("Danh sách nhân vật đã được sắp xếp. Tổng số nhân vật: " + allCombatants.Count);
     }
@@ -111,10 +99,8 @@ public class BattleManager : MonoBehaviour
 
         foreach (Character combatant in allCombatants)
         {
-            // Bổ sung kiểm tra null cho stats để tránh lỗi
             if (combatant.stats == null || !combatant.isAlive) continue;
 
-            // Log trạng thái của từng nhân vật trong vòng lặp
             Debug.Log("Kiểm tra " + combatant.gameObject.name + ". Trạng thái hiện tại: " + combatant.stateMachine.currentState.GetType().Name);
 
             if (combatant.stateMachine.currentState is WaitingState)
@@ -123,7 +109,6 @@ public class BattleManager : MonoBehaviour
                 activeCharacter = combatant;
                 Debug.Log("Đến lượt của " + activeCharacter.gameObject.name);
 
-                // Hiển thị UI cho người chơi
                 if (activeCharacter.isPlayer)
                 {
                     playerActionUI.Show();

@@ -1,17 +1,13 @@
 ﻿using UnityEngine;
-using System.Collections; // Cần thiết cho Coroutine
+using System.Collections; 
 
-// Lớp này quản lý các trạng thái của nhân vật
 public class CharacterStateMachine : MonoBehaviour
 {
-    // Tham chiếu đến các script khác trên cùng GameObject
     public Character character;
 
-    // Tham chiếu đến BattleManager để truy cập danh sách kẻ địch
     public BattleManager battleManager;
 
-    // Các đối tượng trạng thái
-    public BaseState currentState; // Đã đổi từ private thành public
+    public BaseState currentState; 
     public WaitingState waitingState;
     public ReadyState readyState;
     public AttackingState attackingState;
@@ -24,10 +20,7 @@ public class CharacterStateMachine : MonoBehaviour
     {
         character = GetComponent<Character>();
 
-        // Lấy tham chiếu đến BattleManager trên scene
         battleManager = FindFirstObjectByType<BattleManager>();
-
-        // Khởi tạo tất cả các đối tượng trạng thái
         waitingState = new WaitingState(this);
         readyState = new ReadyState(this);
         attackingState = new AttackingState(this);
@@ -39,20 +32,17 @@ public class CharacterStateMachine : MonoBehaviour
 
     void Start()
     {
-        // Chuyển trạng thái ban đầu tại đây để đảm bảo mọi thứ đã sẵn sàng
         SwitchState(waitingState);
     }
 
     void Update()
     {
-        // Gọi hàm OnUpdate của trạng thái hiện tại
         if (currentState != null)
         {
             currentState.OnUpdate();
         }
     }
 
-    // Phương thức để chuyển đổi trạng thái
     public void SwitchState(BaseState newState)
     {
         if (currentState != null)
