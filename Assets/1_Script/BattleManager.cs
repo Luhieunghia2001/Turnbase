@@ -43,7 +43,8 @@ public class BattleManager : MonoBehaviour
         // 1. Spawn nhân vật người chơi
         if (playerPrefab != null && playerSpawnPoint != null)
         {
-            Character playerInstance = Instantiate(playerPrefab, playerSpawnPoint.position, Quaternion.identity);
+            Character playerInstance = Instantiate(playerPrefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
+            playerInstance.transform.SetParent(playerSpawnPoint);
             if (playerInstance != null)
             {
                 playerInstance.isPlayer = true; // Thêm dòng này để đánh dấu là người chơi
@@ -67,7 +68,8 @@ public class BattleManager : MonoBehaviour
             {
                 if (enemySlots[i] != null && enemyPrefabs[i] != null)
                 {
-                    Character enemyInstance = Instantiate(enemyPrefabs[i], enemySlots[i].position, Quaternion.identity);
+                    Character enemyInstance = Instantiate(enemyPrefabs[i], enemySlots[i].position, enemySlots[i].rotation);
+                    enemyInstance.transform.SetParent(enemySlots[i]);
                     if (enemyInstance != null)
                     {
                         enemyInstance.isPlayer = false; // Thêm dòng này để đánh dấu là kẻ địch

@@ -52,5 +52,6 @@ public class Character : MonoBehaviour
     void Awake()
     {
         stateMachine = GetComponent<CharacterStateMachine>();
+        animator = GetComponent<Animator>();
     }
 }

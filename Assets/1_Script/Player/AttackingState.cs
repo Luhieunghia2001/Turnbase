@@ -8,6 +8,8 @@ public class AttackingState : BaseState
 
     public AttackingState(CharacterStateMachine stateMachine) : base(stateMachine) { }
 
+
+    
     public override void OnEnter()
     {
         Debug.Log(stateMachine.gameObject.name + " đang tấn công.");
@@ -40,6 +42,8 @@ public class AttackingState : BaseState
         // Di chuyển đến vị trí mục tiêu
         while (Vector3.Distance(stateMachine.character.transform.position, destination) > 0.1f)
         {
+            stateMachine.character.animator.SetBool("Run",true);
+
             stateMachine.character.transform.position = Vector3.MoveTowards(
                 stateMachine.character.transform.position,
                 destination,
@@ -47,14 +51,21 @@ public class AttackingState : BaseState
             );
             yield return null;
         }
+
         Debug.Log(stateMachine.gameObject.name + " đã đến gần " + target.gameObject.name);
 
+        stateMachine.character.animator.SetBool("Run",false);
+
+        stateMachine.character.animator.SetTrigger("Attack");
+        yield return new WaitForSeconds(1.5f); // Chờ một chút để đồng bộ với hoạt ảnh
         // Thực hiện tấn công
         Debug.Log(stateMachine.gameObject.name + " tấn công " + target.gameObject.name + " tại vị trí slot: " + stateMachine.battleManager.allCombatants.IndexOf(target));
 
         // Quay về vị trí ban đầu
         while (Vector3.Distance(stateMachine.character.transform.position, initialPosition) > 0.1f)
         {
+            stateMachine.character.animator.SetTrigger("RunOut");
+
             stateMachine.character.transform.position = Vector3.MoveTowards(
                 stateMachine.character.transform.position,
                 initialPosition,
