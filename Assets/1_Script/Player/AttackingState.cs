@@ -39,33 +39,36 @@ public class AttackingState : BaseState
         // Điều chỉnh vị trí tấn công để nhân vật không đi vào trong kẻ địch
         destination.x -= 1.5f;
 
+        stateMachine.character.animator.Play("Run");
+
         // Di chuyển đến vị trí mục tiêu
         while (Vector3.Distance(stateMachine.character.transform.position, destination) > 0.1f)
         {
-            stateMachine.character.animator.SetBool("Run",true);
-
             stateMachine.character.transform.position = Vector3.MoveTowards(
                 stateMachine.character.transform.position,
                 destination,
                 moveSpeed * Time.deltaTime
             );
             yield return null;
+
         }
+
+
 
         Debug.Log(stateMachine.gameObject.name + " đã đến gần " + target.gameObject.name);
 
-        stateMachine.character.animator.SetBool("Run",false);
-
         stateMachine.character.animator.SetTrigger("Attack");
+
         yield return new WaitForSeconds(1.5f); // Chờ một chút để đồng bộ với hoạt ảnh
         // Thực hiện tấn công
         Debug.Log(stateMachine.gameObject.name + " tấn công " + target.gameObject.name + " tại vị trí slot: " + stateMachine.battleManager.allCombatants.IndexOf(target));
 
+        // Bắt đầu animation chạy ngược về
+        stateMachine.character.animator.Play("RunOut");
+
         // Quay về vị trí ban đầu
         while (Vector3.Distance(stateMachine.character.transform.position, initialPosition) > 0.1f)
         {
-            stateMachine.character.animator.SetTrigger("RunOut");
-
             stateMachine.character.transform.position = Vector3.MoveTowards(
                 stateMachine.character.transform.position,
                 initialPosition,
@@ -73,6 +76,10 @@ public class AttackingState : BaseState
             );
             yield return null;
         }
+
+        // Sau khi quay về, chuyển animation về trạng thái chờ (Idle)
+        stateMachine.character.animator.Play("Idle");   
+
 
         // Kết thúc lượt của nhân vật hiện tại
         stateMachine.battleManager.EndTurn(stateMachine.character);
