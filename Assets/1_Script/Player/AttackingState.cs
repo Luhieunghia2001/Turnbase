@@ -4,18 +4,15 @@ using System.Collections;
 public class AttackingState : BaseState
 {
     private Character target;
-    private float moveSpeed = 5f; // Đã thêm biến này vào đây để tránh lỗi biên dịch
+    private float moveSpeed = 5f;
 
     public AttackingState(CharacterStateMachine stateMachine) : base(stateMachine) { }
 
-
-    
     public override void OnEnter()
     {
         Debug.Log(stateMachine.gameObject.name + " đang tấn công.");
         target = stateMachine.character.target;
 
-        // Bắt đầu coroutine để xử lý di chuyển và tấn công
         if (target != null)
         {
             stateMachine.character.StartCoroutine(MoveAndAttack());
@@ -29,28 +26,24 @@ public class AttackingState : BaseState
 
     private IEnumerator MoveAndAttack()
     {
-        // Debug để kiểm tra mục tiêu có đúng không
-        Debug.Log("Mục tiêu đã được chọn: " + target.gameObject.name + " tại vị trí slot: " + stateMachine.battleManager.allCombatants.IndexOf(target));
+        Debug.Log("Mục tiêu đã được chọn: " + target.gameObject.name);
 
         Vector3 initialPosition = stateMachine.character.initialPosition;
-        Vector3 targetPosition = target.transform.position;
+        Vector3 destination;
 
-        // Xác định điểm đến (destination)
-        Vector3 destination = target.transform.position;
-
-        // Điều chỉnh vị trí tấn công tùy thuộc vào loại nhân vật (Player hay Enemy)
-        if (stateMachine.character.isPlayer) // Giả sử bạn có một biến IsPlayer trong class Character
+        if (stateMachine.character.isPlayer)
         {
-            // Nếu là Player, di chuyển đến trước mặt Enemy
-            destination.x += 1.5f; // Đứng bên phải Enemy
+            destination = target.transform.position;
+            destination.x += 1f; // Khoảng cách tấn công cho Player
         }
         else
         {
-            // Nếu là Enemy, di chuyển đến trước mặt Player
-            destination.x -= 1.5f; // Đứng bên trái Player
+            destination = target.transform.position;
+            destination.x -= 1f; // Khoảng cách tấn công cho Enemy
         }
-
         stateMachine.character.animator.Play("Run");
+
+        stateMachine.character.animator.SetBool("IsRunning", true);
 
         // Di chuyển đến vị trí mục tiêu
         while (Vector3.Distance(stateMachine.character.transform.position, destination) > 0.1f)
@@ -61,18 +54,19 @@ public class AttackingState : BaseState
                 moveSpeed * Time.deltaTime
             );
             yield return null;
-
         }
-
-
 
         Debug.Log(stateMachine.gameObject.name + " đã đến gần " + target.gameObject.name);
 
+        // Sau khi di chuyển đến nơi, bắt đầu animation tấn công
+        stateMachine.character.animator.SetBool("IsRunning", false);
         stateMachine.character.animator.SetTrigger("Attack");
 
-        yield return new WaitForSeconds(1.5f); // Chờ một chút để đồng bộ với hoạt ảnh
+        // Chờ một chút để đồng bộ với hoạt ảnh
+        yield return new WaitForSeconds(1.5f);
+
         // Thực hiện tấn công
-        Debug.Log(stateMachine.gameObject.name + " tấn công " + target.gameObject.name + " tại vị trí slot: " + stateMachine.battleManager.allCombatants.IndexOf(target));
+        Debug.Log(stateMachine.gameObject.name + " tấn công " + target.gameObject.name);
 
         // Bắt đầu animation chạy ngược về
         stateMachine.character.animator.SetBool("IsRunning", true);
@@ -88,16 +82,19 @@ public class AttackingState : BaseState
             yield return null;
         }
 
-        // Sau khi quay về, chuyển animation về trạng thái chờ (Idle)
         stateMachine.character.animator.SetBool("IsRunning", false);
-
 
         // Kết thúc lượt của nhân vật hiện tại
         stateMachine.battleManager.EndTurn(stateMachine.character);
     }
 
+    public override void OnUpdate()
+    {
+        // Không cần logic gì ở đây vì tất cả được xử lý trong Coroutine
+    }
+
     public override void OnExit()
     {
-        // Có thể thêm logic dọn dẹp ở đây nếu cần
+        stateMachine.character.StopAllCoroutines();
     }
 }

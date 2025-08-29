@@ -2231,6 +2231,7 @@ MonoBehaviour:
   actionGauge: 0
   initialPosition: {x: 0, y: 0, z: 0}
   battleManager: {fileID: 0}
+  isParryable: 0
 --- !u!114 &6007067907109271698
 MonoBehaviour:
   m_ObjectHideFlags: 0

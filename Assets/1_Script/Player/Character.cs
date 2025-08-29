@@ -43,6 +43,8 @@ public class Character : MonoBehaviour
 
     public BattleManager battleManager;
 
+    public bool isParryable;
+
     public bool isAlive
     {
         get { return stats.currentHP > 0; }

@@ -96,20 +96,19 @@ public class BattleManager : MonoBehaviour
                 combatant.stateMachine.SwitchState(combatant.stateMachine.waitingState);
                 combatant.actionGauge = 0; // Đặt lại thanh hành động
             }
-            // Thêm log để xác nhận tất cả nhân vật đã được thêm vào và actionGauge đã được đặt lại
-            Debug.Log($"Đã thêm {combatant.gameObject.name} vào trận chiến. Action Gauge ban đầu: {combatant.actionGauge}");
         }
+
+        // Lắng nghe sự kiện từ PlayerActionUI
+        playerActionUI.OnParryAttempted += OnParryAttempted;
     }
 
     // Coroutine để cập nhật thanh hành động mỗi frame
     private IEnumerator UpdateActionGauge()
     {
-        // Thêm độ trễ ban đầu để game khởi tạo đầy đủ
         yield return new WaitForSeconds(0.5f);
 
         while (true)
         {
-            // Chỉ chạy khi không có nhân vật nào đang hành động và không có lượt nào đang được xử lý
             if (activeCharacter == null && !isProcessingTurn)
             {
                 bool someoneReady = false;
@@ -119,9 +118,6 @@ public class BattleManager : MonoBehaviour
                     {
                         combatant.actionGauge += combatant.stats.agility * Time.deltaTime;
 
-                        // Log giá trị actionGauge của mỗi nhân vật
-
-                        // Kiểm tra nếu có ai đó đã sẵn sàng để hành động
                         if (combatant.actionGauge >= 100 && combatant.stateMachine.currentState is WaitingState)
                         {
                             someoneReady = true;
@@ -129,7 +125,6 @@ public class BattleManager : MonoBehaviour
                     }
                 }
 
-                // Cập nhật giao diện UI của TurnOrder
                 if (turnOrderUI != null)
                 {
                     turnOrderUI.UpdateActionGaugeUI(allCombatants);
@@ -137,15 +132,10 @@ public class BattleManager : MonoBehaviour
 
                 if (someoneReady)
                 {
-                    // Đặt cờ để ngăn các lượt khác chạy song song
                     isProcessingTurn = true;
-                    // Lấy danh sách các nhân vật đã sẵn sàng và sắp xếp theo thanh hành động giảm dần
                     var readyCharacters = allCombatants.Where(c => c.actionGauge >= 100 && c.isAlive).OrderByDescending(c => c.actionGauge).ToList();
                     if (readyCharacters.Any())
                     {
-                        // Log nhân vật chuẩn bị hành động và actionGauge của họ
-                        Debug.Log($"Nhân vật sắp hành động: {readyCharacters.First().gameObject.name} với actionGauge: {readyCharacters.First().actionGauge}");
-                        // Chuyển lượt cho nhân vật có thanh hành động cao nhất
                         AdvanceTurn(readyCharacters.First());
                     }
                 }
@@ -156,7 +146,6 @@ public class BattleManager : MonoBehaviour
 
     public void AdvanceTurn(Character characterToAct)
     {
-        // activeCharacter được đặt trong phương thức này, nên chỉ cần kiểm tra một lần duy nhất
         if (activeCharacter != null)
         {
             return;
@@ -165,10 +154,8 @@ public class BattleManager : MonoBehaviour
         activeCharacter = characterToAct;
         Debug.Log($"Kiểm tra nhân vật: {activeCharacter.gameObject.name}");
 
-        // Chuyển sang trạng thái sẵn sàng
         activeCharacter.stateMachine.SwitchState(activeCharacter.stateMachine.readyState);
 
-        // Cập nhật giao diện người dùng
         if (turnOrderUI != null)
         {
             turnOrderUI.HighlightActiveCharacter(activeCharacter);
@@ -178,31 +165,90 @@ public class BattleManager : MonoBehaviour
         {
             playerActionUI.Show();
         }
-        else // Đây là lượt của kẻ địch
+        else
         {
-            StartCoroutine(EnemyTurn(activeCharacter)); // Truyền activeCharacter vào coroutine
+            StartCoroutine(EnemyTurn(activeCharacter));
         }
     }
 
-    // Coroutine mới để xử lý lượt của kẻ địch
     private IEnumerator EnemyTurn(Character enemy)
     {
         Debug.Log("Đến lượt của kẻ địch: " + enemy.gameObject.name);
 
-        // Chờ một chút để người chơi thấy lượt của kẻ địch
         yield return new WaitForSeconds(1f);
 
-        // Giả sử kẻ địch có một phương thức để thực hiện hành động
         Enemy enemyComponent = enemy.GetComponent<Enemy>();
         if (enemyComponent != null)
         {
             enemyComponent.PerformTurn();
         }
 
-        // Chờ một chút trước khi kết thúc lượt
-        yield return new WaitForSeconds(2f);
+        // Bắt đầu coroutine để xử lý thanh parry
+        StartCoroutine(EnemyParryWindow(enemy));
 
-        EndTurn(enemy);
+        // Wait for the enemy's turn to finish.
+        // The EndTurn call will be handled by the AttackingState,
+        // or by the Parry logic if successful.
+    }
+
+    private IEnumerator EnemyParryWindow(Character enemy)
+    {
+        // Find player to parry
+        Character player = allCombatants.FirstOrDefault(c => c.isPlayer && c.isAlive);
+        if (player == null)
+        {
+            // No player to parry, end coroutine
+            yield break;
+        }
+
+        float parryTimer = 0f;
+        float attackDuration = 1.5f;
+
+        playerActionUI.ShowParryUI(true);
+
+        while (parryTimer < attackDuration)
+        {
+            parryTimer += Time.deltaTime;
+            playerActionUI.parrySlider.value = parryTimer / attackDuration;
+
+            if (playerActionUI.parrySlider.value >= 0.6f && playerActionUI.parrySlider.value <= 0.9f)
+            {
+                player.isParryable = true;
+            }
+            else
+            {
+                player.isParryable = false;
+            }
+
+            yield return null;
+        }
+
+        playerActionUI.ShowParryUI(false);
+    }
+
+    // Phương thức xử lý khi người chơi cố gắng parry
+    public void OnParryAttempted()
+    {
+        Character player = allCombatants.FirstOrDefault(c => c.isPlayer && c.isAlive);
+        if (player != null && player.isParryable)
+        {
+            // Parry thành công!
+            Debug.Log("Parry thành công!");
+            // Đặt lại cờ
+            player.isParryable = false;
+            // Chuyển trạng thái của kẻ tấn công sang Interrupted
+            if (activeCharacter != null)
+            {
+                activeCharacter.stateMachine.SwitchState(activeCharacter.stateMachine.interruptedState);
+            }
+            // Chuyển trạng thái của người chơi sang Parrying
+            player.stateMachine.SwitchState(player.stateMachine.parryingState);
+            // Có thể thêm hiệu ứng ở đây
+        }
+        else
+        {
+            Debug.Log("Parry không thành công!");
+        }
     }
 
     public void EndTurn(Character character)
@@ -215,7 +261,6 @@ public class BattleManager : MonoBehaviour
                 character.stateMachine.SwitchState(character.stateMachine.waitingState);
                 character.actionGauge = 0; // Đặt lại thanh hành động
             }
-            // Đặt lại cờ để cho phép lượt tiếp theo bắt đầu
             isProcessingTurn = false;
         }
     }
