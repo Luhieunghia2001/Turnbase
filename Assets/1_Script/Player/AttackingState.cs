@@ -34,10 +34,21 @@ public class AttackingState : BaseState
 
         Vector3 initialPosition = stateMachine.character.initialPosition;
         Vector3 targetPosition = target.transform.position;
-        Vector3 destination = targetPosition;
 
-        // Điều chỉnh vị trí tấn công để nhân vật không đi vào trong kẻ địch
-        destination.x -= 1.5f;
+        // Xác định điểm đến (destination)
+        Vector3 destination = target.transform.position;
+
+        // Điều chỉnh vị trí tấn công tùy thuộc vào loại nhân vật (Player hay Enemy)
+        if (stateMachine.character.isPlayer) // Giả sử bạn có một biến IsPlayer trong class Character
+        {
+            // Nếu là Player, di chuyển đến trước mặt Enemy
+            destination.x += 1.5f; // Đứng bên phải Enemy
+        }
+        else
+        {
+            // Nếu là Enemy, di chuyển đến trước mặt Player
+            destination.x -= 1.5f; // Đứng bên trái Player
+        }
 
         stateMachine.character.animator.Play("Run");
 
@@ -64,7 +75,7 @@ public class AttackingState : BaseState
         Debug.Log(stateMachine.gameObject.name + " tấn công " + target.gameObject.name + " tại vị trí slot: " + stateMachine.battleManager.allCombatants.IndexOf(target));
 
         // Bắt đầu animation chạy ngược về
-        stateMachine.character.animator.Play("RunOut");
+        stateMachine.character.animator.SetBool("IsRunning", true);
 
         // Quay về vị trí ban đầu
         while (Vector3.Distance(stateMachine.character.transform.position, initialPosition) > 0.1f)
@@ -78,7 +89,7 @@ public class AttackingState : BaseState
         }
 
         // Sau khi quay về, chuyển animation về trạng thái chờ (Idle)
-        stateMachine.character.animator.Play("Idle");   
+        stateMachine.character.animator.SetBool("IsRunning", false);
 
 
         // Kết thúc lượt của nhân vật hiện tại
