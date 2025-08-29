@@ -68,6 +68,11 @@ public class AttackingState : BaseState
         // Thực hiện tấn công
         Debug.Log(stateMachine.gameObject.name + " tấn công " + target.gameObject.name);
 
+        // --- Đây là phần đã được thêm vào ---
+        // Gọi phương thức TakeDamage() trên mục tiêu
+        target.TakeDamage(stateMachine.character.stats.attack);
+        // --- End of addition ---
+
         // Bắt đầu animation chạy ngược về
         stateMachine.character.animator.SetBool("IsRunning", true);
 

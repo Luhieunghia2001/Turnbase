@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using System.Collections; 
+﻿using System.Collections; 
+using UnityEngine;
 
 public class CharacterStateMachine : MonoBehaviour
 {
@@ -15,6 +15,7 @@ public class CharacterStateMachine : MonoBehaviour
     public DeadState deadState;
     public ParryingState parryingState;
     public InterruptedState interruptedState;
+
 
     private void Awake()
     {
@@ -33,6 +34,7 @@ public class CharacterStateMachine : MonoBehaviour
     void Start()
     {
         SwitchState(waitingState);
+
     }
 
     void Update()
@@ -52,4 +54,6 @@ public class CharacterStateMachine : MonoBehaviour
         currentState = newState;
         currentState.OnEnter();
     }
+
+
 }

@@ -2440,8 +2440,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stateMachine: {fileID: 229363719538074653}
   stats:
-    maxHP: 156
-    currentHP: 161
+    maxHP: 605
+    currentHP: 2859
     maxMP: 119
     currentMP: 0
     attack: 3
@@ -2456,6 +2456,7 @@ MonoBehaviour:
   actionGauge: 0
   initialPosition: {x: 0, y: 0, z: 0}
   battleManager: {fileID: 0}
+  isParryable: 0
 --- !u!114 &229363719538074653
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2470,6 +2471,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   character: {fileID: -5687909505730138963}
   battleManager: {fileID: 0}
+  ani: {fileID: 0}
 --- !u!1 &8153395085987538995
 GameObject:
   m_ObjectHideFlags: 0

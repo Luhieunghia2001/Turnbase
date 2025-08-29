@@ -56,4 +56,24 @@ public class Character : MonoBehaviour
         stateMachine = GetComponent<CharacterStateMachine>();
         animator = GetComponent<Animator>();
     }
+
+    public void TakeDamage(int damageAmount)
+    {
+        // Trừ máu
+        stats.currentHP -= damageAmount;
+        Debug.Log(gameObject.name + " đã nhận " + damageAmount + " sát thương. Máu còn lại: " + stats.currentHP);
+
+        // Kiểm tra xem nhân vật có chết không
+        if (stats.currentHP <= 0)
+        {
+            stats.currentHP = 0;
+            // Nếu chết, chuyển sang trạng thái Dead
+            stateMachine.SwitchState(stateMachine.deadState);
+        }
+        else
+        {
+            // Nếu không chết, chuyển sang trạng thái TakingDamage
+            stateMachine.SwitchState(stateMachine.takingDamageState);
+        }
+    }
 }
