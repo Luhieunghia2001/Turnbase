@@ -2448,7 +2448,7 @@ MonoBehaviour:
     defense: 84
     magicAttack: 56
     magicDefense: 93
-    agility: 174
+    agility: 100
   isPlayer: 0
   target: {fileID: 0}
   targetMarker: {fileID: 5109386890736583360}
@@ -2471,7 +2471,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   character: {fileID: -5687909505730138963}
   battleManager: {fileID: 0}
-  ani: {fileID: 0}
 --- !u!1 &8153395085987538995
 GameObject:
   m_ObjectHideFlags: 0

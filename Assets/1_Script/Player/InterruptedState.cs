@@ -17,13 +17,21 @@ public class InterruptedState : BaseState
     {
         // 1. Kích hoạt hoạt ảnh bị đánh (hit/damage animation)
         stateMachine.character.animator.SetTrigger("Hit");
+        stateMachine.character.animator.SetTrigger("GetUp");
+        stateMachine.character.animator.SetBool("IsIdle", false);
+
+
 
         // Chờ một khoảng thời gian để hoạt ảnh hoàn tất
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(5);
+
+        stateMachine.character.animator.SetBool("IsRunningOut", true);
+
+
+
 
         // 2. Quay về vị trí ban đầu
         Vector3 initialPosition = stateMachine.character.initialPosition;
-        stateMachine.character.animator.SetBool("IsRunning", true);
 
         while (Vector3.Distance(stateMachine.character.transform.position, initialPosition) > 0.1f)
         {
@@ -35,8 +43,9 @@ public class InterruptedState : BaseState
             yield return null;
         }
 
+
         // 3. Sau khi quay về, kết thúc lượt của nhân vật bị gián đoạn
-        stateMachine.character.animator.SetBool("IsRunning", false);
+        stateMachine.character.animator.SetBool("IsIdle", true);
         Debug.Log(stateMachine.gameObject.name + " đã quay về vị trí ban đầu sau khi bị gián đoạn.");
 
         stateMachine.battleManager.EndTurn(stateMachine.character);
