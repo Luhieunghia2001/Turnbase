@@ -13,39 +13,32 @@ public class AttackingState : BaseState
         Debug.Log(stateMachine.gameObject.name + " đang tấn công.");
         target = stateMachine.character.target;
 
-        if (target != null)
+        if (target != null && target.isAlive)
         {
             stateMachine.character.StartCoroutine(MoveAndAttack());
         }
         else
         {
-            Debug.LogWarning("Không có mục tiêu nào được chọn. Trở lại trạng thái chờ.");
-            stateMachine.SwitchState(stateMachine.waitingState);
+            Debug.LogWarning("Mục tiêu không hợp lệ hoặc đã chết. Trở lại trạng thái chờ.");
+            // Kết thúc lượt ngay lập tức nếu không có mục tiêu
+            stateMachine.battleManager.EndTurn(stateMachine.character);
         }
     }
 
     private IEnumerator MoveAndAttack()
     {
-        Debug.Log("Mục tiêu đã được chọn: " + target.gameObject.name);
-
+        // 1. Di chuyển đến mục tiêu
         Vector3 initialPosition = stateMachine.character.initialPosition;
-        Vector3 destination;
+        float attackDistance = 1.5f; // Khoảng cách tấn công tùy chỉnh
 
-        if (stateMachine.character.isPlayer)
-        {
-            destination = target.transform.position;
-            destination.x += 1f; // Khoảng cách tấn công cho Player
-        }
-        else
-        {
-            destination = target.transform.position;
-            destination.x -= 1f; // Khoảng cách tấn công cho Enemy
-        }
+        // Tính toán vị trí đích dựa trên vị trí của mục tiêu và người tấn công
+        float direction = Mathf.Sign(target.transform.position.x - stateMachine.character.transform.position.x);
+        Vector3 destination = target.transform.position - new Vector3(direction * attackDistance, 0, 0);
+
+        // Chạy animation
         stateMachine.character.animator.Play("Run");
-
         stateMachine.character.animator.SetBool("IsRunning", true);
 
-        // Di chuyển đến vị trí mục tiêu
         while (Vector3.Distance(stateMachine.character.transform.position, destination) > 0.1f)
         {
             stateMachine.character.transform.position = Vector3.MoveTowards(
@@ -56,27 +49,18 @@ public class AttackingState : BaseState
             yield return null;
         }
 
-        Debug.Log(stateMachine.gameObject.name + " đã đến gần " + target.gameObject.name);
-
-        // Sau khi di chuyển đến nơi, bắt đầu animation tấn công
+        // 2. Tấn công và chờ đợi
         stateMachine.character.animator.SetBool("IsRunning", false);
         stateMachine.character.animator.SetTrigger("Attack");
 
-        // Chờ một chút để đồng bộ với hoạt ảnh
-        yield return new WaitForSeconds(1.5f);
-
-        // Thực hiện tấn công
-        Debug.Log(stateMachine.gameObject.name + " tấn công " + target.gameObject.name);
-
-        // --- Đây là phần đã được thêm vào ---
-        // Gọi phương thức TakeDamage() trên mục tiêu
+        // Gây sát thương
+        yield return new WaitForSeconds(1f); // Chờ một chút để khớp với animation
         target.TakeDamage(stateMachine.character.stats.attack);
-        // --- End of addition ---
+        yield return new WaitForSeconds(1.5f); // Chờ phần còn lại của animation
 
-        // Bắt đầu animation chạy ngược về
+        // 3. Quay trở về vị trí ban đầu
         stateMachine.character.animator.SetBool("IsRunning", true);
 
-        // Quay về vị trí ban đầu
         while (Vector3.Distance(stateMachine.character.transform.position, initialPosition) > 0.1f)
         {
             stateMachine.character.transform.position = Vector3.MoveTowards(
@@ -89,14 +73,11 @@ public class AttackingState : BaseState
 
         stateMachine.character.animator.SetBool("IsRunning", false);
 
-        // Kết thúc lượt của nhân vật hiện tại
+        // 4. Kết thúc lượt
         stateMachine.battleManager.EndTurn(stateMachine.character);
     }
 
-    public override void OnUpdate()
-    {
-        // Không cần logic gì ở đây vì tất cả được xử lý trong Coroutine
-    }
+    public override void OnUpdate() { }
 
     public override void OnExit()
     {
