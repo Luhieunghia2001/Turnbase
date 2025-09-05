@@ -10,6 +10,7 @@ public class CharacterStateMachine : MonoBehaviour
     public BaseState currentState; 
     public WaitingState waitingState;
     public ReadyState readyState;
+    public ReadyStateSkill readyStateSkill;
     public AttackingState attackingState;
     public TakingDamageState takingDamageState;
     public DeadState deadState;

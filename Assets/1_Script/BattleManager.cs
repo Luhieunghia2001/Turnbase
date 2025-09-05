@@ -144,6 +144,7 @@ public class BattleManager : MonoBehaviour
         }
     }
 
+    // Trong BattleManager.cs
     public void AdvanceTurn(Character characterToAct)
     {
         if (activeCharacter != null)
@@ -154,23 +155,26 @@ public class BattleManager : MonoBehaviour
         activeCharacter = characterToAct;
         Debug.Log($"Kiểm tra nhân vật: {activeCharacter.gameObject.name}");
 
-        activeCharacter.stateMachine.SwitchState(activeCharacter.stateMachine.readyState);
+        activeCharacter.stateMachine.SwitchState(activeCharacter.stateMachine.waitingState);
 
         if (turnOrderUI != null)
         {
             turnOrderUI.HighlightActiveCharacter(activeCharacter);
         }
 
+        // --- SỬA ĐỔI PHẦN NÀY ---
         if (activeCharacter.isPlayer)
         {
             playerActionUI.Show();
+            // Gọi phương thức để cập nhật UI kỹ năng và truyền danh sách kỹ năng
+            playerActionUI.SetupSkillUI(activeCharacter.skills);
         }
+        // --- KẾT THÚC SỬA ĐỔI ---
         else
         {
             StartCoroutine(EnemyTurn(activeCharacter));
         }
     }
-
     private IEnumerator EnemyTurn(Character enemy)
     {
         Debug.Log("Đến lượt của kẻ địch: " + enemy.gameObject.name);

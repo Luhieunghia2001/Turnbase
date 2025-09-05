@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 public enum BattleState
 {
@@ -38,6 +39,7 @@ public class Character : MonoBehaviour
 
     public float actionGauge;
 
+    public List<Skill> skills;
 
     public Vector3 initialPosition;
 

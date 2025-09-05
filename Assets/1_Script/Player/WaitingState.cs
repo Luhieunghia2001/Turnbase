@@ -13,9 +13,6 @@ public class WaitingState : BaseState
 
     public override void OnUpdate()
     {
-        // Loại bỏ logic tự động chuyển trạng thái khỏi đây.
-        // WaitingState chỉ đơn giản là chờ đợi.
-        // BattleManager sẽ chịu trách nhiệm chuyển trạng thái khi đến lượt của nhân vật.
     }
 
     public override void OnExit()
