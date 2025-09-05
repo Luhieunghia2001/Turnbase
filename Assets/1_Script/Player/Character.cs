@@ -71,6 +71,13 @@ public class Character : MonoBehaviour
             stats.currentHP = 0;
             // Nếu chết, chuyển sang trạng thái Dead
             stateMachine.SwitchState(stateMachine.deadState);
+
+            // QUAN TRỌNG: Thông báo cho BattleManager để xóa nhân vật này khỏi danh sách.
+            // Điều này ngăn ngừa các lỗi NullReferenceException sau này.
+            if (battleManager != null)
+            {
+                battleManager.RemoveCombatant(this);
+            }
         }
         else
         {

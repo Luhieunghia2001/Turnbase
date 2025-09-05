@@ -4,15 +4,13 @@ using System.Linq;
 
 public class ReadyStateSkill : BaseState
 {
-    private Skill selectedSkill; // Thêm dòng này để khai báo biến
-
+    private Skill selectedSkill;
     private List<Character> possibleTargets;
     private int currentIndex;
 
-    // Chỉnh sửa constructor để nhận tham số Skill
     public ReadyStateSkill(CharacterStateMachine stateMachine, Skill skill) : base(stateMachine)
     {
-        this.selectedSkill = skill; // Gán skill được truyền vào
+        this.selectedSkill = skill;
     }
 
     public override void OnEnter()
@@ -23,55 +21,82 @@ public class ReadyStateSkill : BaseState
         ShowTargetMarker(false);
         stateMachine.character.target = null;
 
-        // Tùy thuộc vào loại mục tiêu của kỹ năng, lọc danh sách mục tiêu
+        // Lọc danh sách mục tiêu dựa trên loại mục tiêu của kỹ năng, thêm kiểm tra null
         switch (selectedSkill.targetType)
         {
             case SkillTargetType.Self:
                 possibleTargets = new List<Character> { stateMachine.character };
                 break;
             case SkillTargetType.Ally:
-                possibleTargets = stateMachine.battleManager.allCombatants.FindAll(c => c.isPlayer);
+                possibleTargets = stateMachine.battleManager.allCombatants.FindAll(c => c != null && c.isPlayer && c.isAlive);
                 break;
             case SkillTargetType.Enemy:
-                possibleTargets = stateMachine.battleManager.allCombatants.FindAll(c => !c.isPlayer);
+                possibleTargets = stateMachine.battleManager.allCombatants.FindAll(c => c != null && !c.isPlayer && c.isAlive);
                 break;
             case SkillTargetType.Allies:
-                // Nếu là AoE cho đồng minh, bạn có thể chọn một mục tiêu đầu tiên
-                possibleTargets = stateMachine.battleManager.allCombatants.FindAll(c => c.isPlayer);
+                possibleTargets = stateMachine.battleManager.allCombatants.FindAll(c => c != null && c.isPlayer && c.isAlive);
                 break;
-            case SkillTargetType.AllEnemie:
-                // Nếu là AoE cho kẻ địch, bạn cũng có thể chọn một mục tiêu đầu tiên
-                possibleTargets = stateMachine.battleManager.allCombatants.FindAll(c => !c.isPlayer);
+            case SkillTargetType.Enemies:
+                possibleTargets = stateMachine.battleManager.allCombatants.FindAll(c => c != null && !c.isPlayer && c.isAlive);
                 break;
         }
 
         if (possibleTargets.Count > 0)
         {
-            currentIndex = 0;
-            stateMachine.character.target = possibleTargets[currentIndex];
-
-            if (stateMachine.character.isPlayer)
+            if (selectedSkill.targetType == SkillTargetType.Enemies || selectedSkill.targetType == SkillTargetType.Allies)
             {
-                if (stateMachine.character.target.targetMarker != null)
+                foreach (Character character in possibleTargets)
+                {
+                    if (character != null)
+                    {
+                        if (character.targetMarker != null)
+                        {
+                            character.targetMarker.SetActive(true);
+                        }
+                        else
+                        {
+                            Debug.LogError($"Lỗi: Target marker bị thiếu trên nhân vật: {character.gameObject.name}. Vui lòng gán trong Inspector.");
+                        }
+                    }
+                }
+                stateMachine.character.target = null;
+            }
+            else
+            {
+                currentIndex = 0;
+                stateMachine.character.target = possibleTargets[currentIndex];
+
+                if (stateMachine.character.target != null && stateMachine.character.target.targetMarker != null)
                 {
                     stateMachine.character.target.targetMarker.SetActive(true);
+                }
+                else
+                {
+                    Debug.LogError($"Lỗi: Target marker bị thiếu trên nhân vật: {stateMachine.character.target.gameObject.name}. Vui lòng gán trong Inspector.");
                 }
             }
         }
         else
         {
-            stateMachine.character.target = null;
-            Debug.LogWarning("Không tìm thấy mục tiêu khả dụng cho kỹ năng này.");
+            Debug.LogWarning($"Không tìm thấy mục tiêu khả dụng cho kỹ năng: {selectedSkill.skillName}. Tự động hủy.");
+            OnCancel();
         }
     }
+
     public override void OnUpdate()
     {
         if (stateMachine.character.isPlayer)
         {
-            if (Input.GetKeyDown(KeyCode.A))
-                UpdateTarget(-1);
-            if (Input.GetKeyDown(KeyCode.D))
-                UpdateTarget(1);
+            if (selectedSkill.targetType == SkillTargetType.Enemy || selectedSkill.targetType == SkillTargetType.Ally)
+            {
+                if (Input.GetKeyDown(KeyCode.A))
+                    UpdateTarget(-1);
+                if (Input.GetKeyDown(KeyCode.D))
+                    UpdateTarget(1);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+                OnCancel();
         }
     }
 
@@ -79,7 +104,6 @@ public class ReadyStateSkill : BaseState
     {
         if (possibleTargets.Count > 0)
         {
-            // Ẩn marker của mục tiêu hiện tại
             if (stateMachine.character.target != null && stateMachine.character.target.targetMarker != null)
             {
                 stateMachine.character.target.targetMarker.SetActive(false);
@@ -90,7 +114,6 @@ public class ReadyStateSkill : BaseState
 
             Debug.Log("Đã chuyển mục tiêu sang: " + stateMachine.character.target.gameObject.name + " tại vị trí slot: " + currentIndex);
 
-            // Hiển thị marker cho mục tiêu mới, bất kể đó là ai
             if (stateMachine.character.target != null && stateMachine.character.target.targetMarker != null)
             {
                 stateMachine.character.target.targetMarker.SetActive(true);
@@ -110,14 +133,28 @@ public class ReadyStateSkill : BaseState
             foreach (Character target in possibleTargets)
             {
                 if (target != null && target.targetMarker != null)
+                {
                     target.targetMarker.SetActive(active);
+                }
             }
         }
     }
 
-    // Thêm phương thức OnConfirm() để chuyển trạng thái tấn công
     public void OnConfirm()
     {
+        if (selectedSkill.targetType == SkillTargetType.Enemies || selectedSkill.targetType == SkillTargetType.Allies)
+        {
+            stateMachine.character.target = possibleTargets[0];
+        }
+
         stateMachine.SwitchState(new SkillAttackingState(stateMachine, selectedSkill));
+    }
+
+    public void OnCancel()
+    {
+        stateMachine.battleManager.playerActionUI.PlayerSkill.SetActive(false);
+        stateMachine.battleManager.playerActionUI.confirmButton.gameObject.SetActive(false);
+        stateMachine.character.target = null;
+        stateMachine.SwitchState(stateMachine.readyState);
     }
 }

@@ -8,9 +8,11 @@ public class Skill : ScriptableObject
     public string description;
     public int damage;
     public int manaCost;
-    public SkillTargetType targetType;
     public Sprite icon;
+
+    public SkillTargetType targetType;
     public SkillType skillType;
+    public ElementType elementType;
 
 }
 
@@ -22,14 +24,26 @@ public enum SkillTargetType
     Enemy,      // Một kẻ địch
     Enemies,    // Tất cả kẻ địch (Lỗi: 'AllEnemie' -> sửa thành 'Enemies')
     Allies,     // Tất cả đồng minh
-    AllEnemie,  // Tất cả kẻ địch
+
 }
 
 public enum SkillType
 {
     Damage,
+    DamageAll,
     Heal,
     Buff,
     Debuff,
     Special
+}
+
+public enum ElementType
+{
+    None,
+    Fire,
+    Water,
+    Earth,
+    Air,
+    Light,
+    Dark
 }

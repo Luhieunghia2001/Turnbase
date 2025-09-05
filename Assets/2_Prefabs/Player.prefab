@@ -2314,6 +2314,7 @@ MonoBehaviour:
   skills:
   - {fileID: 11400000, guid: d87ee4e013f2a8e4ba13fdc8485ec0b0, type: 2}
   - {fileID: 11400000, guid: 46d0d6019c4b8b7439efe6f65af0d2b2, type: 2}
+  - {fileID: 11400000, guid: ace86d8a32230714f86b111a0e7b0a53, type: 2}
   initialPosition: {x: 0, y: 0, z: 0}
   battleManager: {fileID: 0}
   isParryable: 0
