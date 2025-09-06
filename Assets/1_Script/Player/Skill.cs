@@ -23,7 +23,7 @@ public enum SkillTargetType
     Ally,       // Một đồng minh
     Enemy,      // Một kẻ địch
     Enemies,    // Tất cả kẻ địch (Lỗi: 'AllEnemie' -> sửa thành 'Enemies')
-    Allies,     // Tất cả đồng minh
+    Allies,     // Tất  đồng minhcả
 
 }
 
@@ -40,10 +40,13 @@ public enum SkillType
 public enum ElementType
 {
     None,
+    Physical,
+    Magical,
     Fire,
-    Water,
-    Earth,
-    Air,
-    Light,
-    Dark
+    Ice,
+    Poison,
+    Lightning,
+    Holy,
+    Dark,
+
 }
