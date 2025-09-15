@@ -85,4 +85,14 @@ public class Character : MonoBehaviour
             stateMachine.SwitchState(stateMachine.takingDamageState);
         }
     }
+
+    public void Heal(int amount)
+    {
+        if (!isAlive) return;
+
+        stats.currentHP = Mathf.Min(stats.currentHP + amount, stats.maxHP);
+
+        Debug.Log($"{gameObject.name} hồi {amount} máu! Máu hiện tại: {stats.currentHP}");
+    }
+
 }

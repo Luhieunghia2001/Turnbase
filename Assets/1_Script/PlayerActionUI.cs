@@ -6,6 +6,8 @@ using System.Collections.Generic;
 
 public class PlayerActionUI : MonoBehaviour
 {
+    public static PlayerActionUI playerInstance;
+
     public BattleManager battleManager;
 
     public Button attackButton;
@@ -37,6 +39,8 @@ public class PlayerActionUI : MonoBehaviour
 
 
         PlayerSkill.gameObject.SetActive(false);
+
+        battleManager = FindFirstObjectByType<BattleManager>();
 
     }
 

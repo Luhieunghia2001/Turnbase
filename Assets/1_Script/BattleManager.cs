@@ -29,10 +29,18 @@ public class BattleManager : MonoBehaviour
 
     void Start()
     {
+
         // Khởi tạo trận chiến
         SetupBattle();
+
+        
+
+
         // Bắt đầu Coroutine sau khi tất cả các nhân vật đã được khởi tạo
         StartCoroutine(UpdateActionGauge());
+
+
+
     }
 
     void SetupBattle()
@@ -41,16 +49,18 @@ public class BattleManager : MonoBehaviour
         allCombatants = new List<Character>();
 
         // 1. Spawn nhân vật người chơi
+        // 1. Spawn nhân vật người chơi
         if (playerPrefab != null && playerSpawnPoint != null)
         {
             Character playerInstance = Instantiate(playerPrefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
             playerInstance.transform.SetParent(playerSpawnPoint);
+
             if (playerInstance != null)
             {
-                playerInstance.isPlayer = true; // Thêm dòng này để đánh dấu là người chơi
+                playerInstance.isPlayer = true;
                 allCombatants.Add(playerInstance);
                 playerInstance.initialPosition = playerSpawnPoint.position;
-                playerInstance.battleManager = this; // Gán tham chiếu BattleManager
+                playerInstance.battleManager = this;
 
                 // Gán tham chiếu cho state machine
                 CharacterStateMachine playerStateMachine = playerInstance.GetComponent<CharacterStateMachine>();
@@ -58,8 +68,12 @@ public class BattleManager : MonoBehaviour
                 {
                     playerStateMachine.battleManager = this;
                 }
+
+                // 🔹 Lấy PlayerActionUI từ trong playerInstance (dù nó nằm trong Canvas con)
+                playerActionUI = playerInstance.GetComponentInChildren<PlayerActionUI>(true);
             }
         }
+
 
         // 2. Spawn kẻ địch
         if (enemySlots.Length > 0 && enemyPrefabs.Length > 0)
