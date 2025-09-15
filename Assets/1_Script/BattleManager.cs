@@ -172,7 +172,7 @@ public class BattleManager : MonoBehaviour
             // Hiện UI đúng cho player đang active
             if (activeCharacter.ownUI != null)
             {
-                activeCharacter.ownUI.Show();
+                activeCharacter.ownUI.ShowUI();
                 Debug.Log("Trying to show UI: " + activeCharacter.ownUI.playerActionsPanel.activeInHierarchy);
                 activeCharacter.ownUI.SetupSkillUI(activeCharacter.skills);
                 activeCharacter.ownUI.SetActiveCharacter(activeCharacter);

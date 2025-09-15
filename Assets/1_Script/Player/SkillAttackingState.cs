@@ -32,6 +32,9 @@ public class SkillAttackingState : BaseState
             Debug.Log("Không có command phù hợp, kết thúc lượt.");
             stateMachine.battleManager.EndTurn(user);
         }
+
+        PlayerActionUI.Instance.Hide();
+
     }
 
 

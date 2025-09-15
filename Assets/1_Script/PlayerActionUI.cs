@@ -2,10 +2,11 @@
 using UnityEngine.UI;
 using System;
 using System.Collections.Generic;
+using System.Collections;
 
 public class PlayerActionUI : MonoBehaviour
 {
-    // Owner của UI — nhân vật mà UI này thuộc về
+    public static PlayerActionUI Instance { get; private set; }
     public Character Owner { get; private set; }
 
     public BattleManager battleManager;
@@ -30,6 +31,18 @@ public class PlayerActionUI : MonoBehaviour
     public Action OnParryAttempted;
 
     private Skill selectedSkillToConfirm;
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
     private void Start()
     {
@@ -67,13 +80,21 @@ public class PlayerActionUI : MonoBehaviour
         Hide();
     }
 
-    public void Show()
+    public void ShowUI()
     {
+        StartCoroutine(ShowDelay());
+    }
+
+    private IEnumerator ShowDelay()
+    {
+        yield return new WaitForSeconds(1f);
+
         playerActionsPanel.SetActive(true);
         confirmButton.gameObject.SetActive(false);
         // ẩn các UI liên quan đến parry (hiện khi cần)
         if (parryButton != null) parryButton.gameObject.SetActive(false);
         if (parrySlider != null) parrySlider.gameObject.SetActive(false);
+
     }
 
     public void Hide()

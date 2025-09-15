@@ -5,6 +5,7 @@ public class AttackingState : BaseState
 {
     private Character target;
 
+
     public AttackingState(CharacterStateMachine stateMachine) : base(stateMachine) { }
 
     public override void OnEnter()
@@ -26,6 +27,9 @@ public class AttackingState : BaseState
 
         ICommand command = new AttackCommand(stateMachine.character, target, basicAttack);
         stateMachine.character.StartCoroutine(ExecuteCommand(command));
+
+        PlayerActionUI.Instance.Hide();
+
     }
 
     private IEnumerator ExecuteCommand(ICommand command)
