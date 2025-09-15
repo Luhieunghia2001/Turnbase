@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System;
-using NUnit.Framework;
 using System.Collections.Generic;
 
 public class PlayerActionUI : MonoBehaviour
 {
-    public static PlayerActionUI playerInstance;
+    // Owner của UI — nhân vật mà UI này thuộc về
+    public Character Owner { get; private set; }
 
     public BattleManager battleManager;
 
@@ -15,9 +15,10 @@ public class PlayerActionUI : MonoBehaviour
     public Button parryButton;
     public Button confirmButton;
 
+    private Character currentCharacter;
+
     [Header("Skill Buttons")]
     public List<Button> skillButtons;
-
 
     public GameObject playerActionsPanel;
     public GameObject PlayerSkill;
@@ -32,23 +33,45 @@ public class PlayerActionUI : MonoBehaviour
 
     private void Start()
     {
+        // Add listeners (safe to add once)
         attackButton.onClick.AddListener(OnAttackClicked);
         skillButton.onClick.AddListener(OnSkillClicked);
         parryButton.onClick.AddListener(OnParryClicked);
         confirmButton.onClick.AddListener(OnConfirmClicked);
 
-
         PlayerSkill.gameObject.SetActive(false);
 
-        battleManager = FindFirstObjectByType<BattleManager>();
+        // fallback: tìm BattleManager nếu chưa có (SetOwner sẽ gán đúng hơn)
+        if (battleManager == null)
+        {
+            battleManager = FindFirstObjectByType<BattleManager>();
+        }
 
+        // ẩn mặc định; BattleManager sẽ show UI khi đến lượt owner
+        Hide();
+    }
+
+    // Called by BattleManager right after spawn to link UI <-> Character
+    public void SetOwner(Character owner)
+    {
+        Owner = owner;
+        currentCharacter = owner;
+
+        // ensure we have battleManager reference
+        if (Owner != null)
+        {
+            battleManager = Owner.battleManager;
+        }
+
+        // hide initially
+        Hide();
     }
 
     public void Show()
     {
         playerActionsPanel.SetActive(true);
         confirmButton.gameObject.SetActive(false);
-        // Đảm bảo các UI liên quan đến parry bị ẩn
+        // ẩn các UI liên quan đến parry (hiện khi cần)
         if (parryButton != null) parryButton.gameObject.SetActive(false);
         if (parrySlider != null) parrySlider.gameObject.SetActive(false);
     }
@@ -71,16 +94,20 @@ public class PlayerActionUI : MonoBehaviour
         }
     }
 
+    // (Optional) allow BattleManager to set the active character - useful if UI reused
+    public void SetActiveCharacter(Character character)
+    {
+        currentCharacter = character;
+    }
+
     private void OnAttackClicked()
     {
         Debug.Log("OnAttackClicked được gọi.");
-        if (battleManager.activeCharacter != null && battleManager.activeCharacter.isPlayer)
+        if (currentCharacter != null && currentCharacter.isPlayer)
         {
-            // Chuyển sang ReadyState để người chơi chọn mục tiêu
-            battleManager.activeCharacter.stateMachine.SwitchState(battleManager.activeCharacter.stateMachine.readyState);
+            currentCharacter.stateMachine.SwitchState(currentCharacter.stateMachine.readyState);
+            confirmButton.gameObject.SetActive(true);
         }
-        // Hiển thị nút xác nhận sau khi chọn hành động
-        confirmButton.gameObject.SetActive(true);
     }
 
     private void OnSkillClicked()
@@ -89,18 +116,18 @@ public class PlayerActionUI : MonoBehaviour
         PlayerSkill.SetActive(true);
     }
 
+    // IMPORTANT: uses currentCharacter (the owner) instead of battleManager.activeCharacter
     private void OnSkillButtonClicked(Skill selectedSkill)
     {
-        Debug.Log($"OnSkillButtonClicked được gọi với kỹ năng: {selectedSkill.skillName}");
-        // Chuyển sang ReadyStateSkill để người chơi chọn mục tiêu
-        battleManager.activeCharacter.stateMachine.SwitchState(
-            new ReadyStateSkill(battleManager.activeCharacter.stateMachine, selectedSkill)
+        if (currentCharacter == null) return;
+
+        Debug.Log($"OnSkillButtonClicked được gọi với kỹ năng: {selectedSkill.skillName} cho {currentCharacter.name}");
+
+        currentCharacter.stateMachine.SwitchState(
+            new ReadyStateSkill(currentCharacter.stateMachine, selectedSkill)
         );
 
-        // Lưu lại kỹ năng đã chọn vào biến tạm thời
         selectedSkillToConfirm = selectedSkill;
-
-        // Chỉ hiển thị nút xác nhận, không ẩn skillButtons
         confirmButton.gameObject.SetActive(true);
     }
 
@@ -108,15 +135,18 @@ public class PlayerActionUI : MonoBehaviour
     {
         Debug.Log("SetupSkillUI được gọi.");
 
+        // Ẩn tất cả button trước
+        foreach (var b in skillButtons) b.gameObject.SetActive(false);
+
         for (int i = 0; i < skills.Count && i < skillButtons.Count; i++)
         {
             Button currentButton = skillButtons[i];
-
             currentButton.onClick.RemoveAllListeners();
 
             Skill skillToUse = skills[i];
-
-            currentButton.onClick.AddListener(() => OnSkillButtonClicked(skillToUse));
+            // capture local var for closure
+            Skill captured = skillToUse;
+            currentButton.onClick.AddListener(() => OnSkillButtonClicked(captured));
 
             Image buttonImage = currentButton.GetComponent<Image>();
             if (buttonImage == null)
@@ -141,31 +171,28 @@ public class PlayerActionUI : MonoBehaviour
 
     private void OnParryClicked()
     {
-        if (OnParryAttempted != null)
-        {
-            OnParryAttempted();
-        }
+        // Notify subscribers (BattleManager subscribed at spawn)
+        OnParryAttempted?.Invoke();
     }
 
     private void OnConfirmClicked()
     {
         Debug.Log("OnConfirmClicked được gọi.");
 
-        // Kiểm tra xem nhân vật có đang ở trạng thái ReadyStateSkill không
-        if (battleManager.activeCharacter.stateMachine.currentState is ReadyStateSkill currentState)
+        if (currentCharacter == null) return;
+
+        if (currentCharacter.stateMachine.currentState is ReadyStateSkill currentState)
         {
             Debug.Log("Gọi OnConfirm() của ReadyStateSkill.");
-            // Gọi phương thức OnConfirm của trạng thái hiện tại (ReadyStateSkill)
             currentState.OnConfirm();
 
-            // Ẩn các UI không cần thiết
             confirmButton.gameObject.SetActive(false);
             PlayerSkill.SetActive(false);
         }
-        else if (battleManager.activeCharacter.stateMachine.currentState is ReadyState)
+        else if (currentCharacter.stateMachine.currentState is ReadyState)
         {
             Debug.Log("Chuyển từ ReadyState sang AttackingState.");
-            battleManager.activeCharacter.stateMachine.SwitchState(battleManager.activeCharacter.stateMachine.attackingState);
+            currentCharacter.stateMachine.SwitchState(currentCharacter.stateMachine.attackingState);
             confirmButton.gameObject.SetActive(false);
             PlayerSkill.SetActive(false);
         }

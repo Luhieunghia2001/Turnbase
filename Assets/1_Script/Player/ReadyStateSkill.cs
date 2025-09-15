@@ -152,9 +152,14 @@ public class ReadyStateSkill : BaseState
 
     public void OnCancel()
     {
-        stateMachine.battleManager.playerActionUI.PlayerSkill.SetActive(false);
-        stateMachine.battleManager.playerActionUI.confirmButton.gameObject.SetActive(false);
+        if (stateMachine.character.ownUI != null)
+        {
+            stateMachine.character.ownUI.PlayerSkill.SetActive(false);
+            stateMachine.character.ownUI.confirmButton.gameObject.SetActive(false);
+        }
+
         stateMachine.character.target = null;
         stateMachine.SwitchState(stateMachine.readyState);
     }
+
 }

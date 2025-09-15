@@ -5,118 +5,103 @@ using System.Collections;
 
 public class BattleManager : MonoBehaviour
 {
-    // Danh sách tất cả các nhân vật tham gia trận chiến (bao gồm cả người chơi và kẻ địch)
     public List<Character> allCombatants = new List<Character>();
-
-    // Biến để theo dõi lượt của ai
     public Character activeCharacter;
 
-    // Thêm biến cờ để tránh xử lý nhiều lượt cùng lúc
     private bool isProcessingTurn = false;
 
-    // --- Các Prefab và vị trí Spawn ---
-    public Character playerPrefab;
+    [Header("Players")]
+    public Character[] playerPrefabs;
+    public Transform[] playerSpawnPoints;
 
-    // Mảng các vị trí cố định cho kẻ địch, có thể kéo thả từ Inspector
+    [Header("Enemies")]
     public Transform[] enemySlots;
     public Character[] enemyPrefabs;
 
-    public Transform playerSpawnPoint;
-
-    // Tham chiếu UI
-    public PlayerActionUI playerActionUI;
-    public TurnOrderUI turnOrderUI; // Thêm tham chiếu đến script UI mới
+    public TurnOrderUI turnOrderUI;
 
     void Start()
     {
-
-        // Khởi tạo trận chiến
         SetupBattle();
+        StartCoroutine(DelayedStart());
+    }
 
-        
-
-
-        // Bắt đầu Coroutine sau khi tất cả các nhân vật đã được khởi tạo
+    IEnumerator DelayedStart()
+    {
+        yield return null;  // đợi 1 frame
         StartCoroutine(UpdateActionGauge());
-
-
-
     }
 
     void SetupBattle()
     {
-        // Khởi tạo danh sách nhân vật
         allCombatants = new List<Character>();
 
-        // 1. Spawn nhân vật người chơi
-        // 1. Spawn nhân vật người chơi
-        if (playerPrefab != null && playerSpawnPoint != null)
+        // Spawn Players
+        int playerCount = Mathf.Min(playerPrefabs.Length, playerSpawnPoints.Length);
+        for (int i = 0; i < playerCount; i++)
         {
-            Character playerInstance = Instantiate(playerPrefab, playerSpawnPoint.position, playerSpawnPoint.rotation);
-            playerInstance.transform.SetParent(playerSpawnPoint);
+            Character playerInstance = Instantiate(playerPrefabs[i], playerSpawnPoints[i].position, playerSpawnPoints[i].rotation);
+            playerInstance.transform.SetParent(playerSpawnPoints[i]);
 
-            if (playerInstance != null)
+            playerInstance.isPlayer = true;
+            allCombatants.Add(playerInstance);
+            playerInstance.initialPosition = playerSpawnPoints[i].position;
+            playerInstance.battleManager = this;
+
+            CharacterStateMachine playerStateMachine = playerInstance.GetComponent<CharacterStateMachine>();
+            if (playerStateMachine != null)
             {
-                playerInstance.isPlayer = true;
-                allCombatants.Add(playerInstance);
-                playerInstance.initialPosition = playerSpawnPoint.position;
-                playerInstance.battleManager = this;
+                playerStateMachine.battleManager = this;
+            }
 
-                // Gán tham chiếu cho state machine
-                CharacterStateMachine playerStateMachine = playerInstance.GetComponent<CharacterStateMachine>();
-                if (playerStateMachine != null)
-                {
-                    playerStateMachine.battleManager = this;
-                }
+            // 🔹 Gắn UI riêng cho mỗi player
+            PlayerActionUI actionUI = playerInstance.GetComponentInChildren<PlayerActionUI>(true);
+            if (actionUI != null)
+            {
+                // Gán owner để UI biết thuộc về player này
+                actionUI.SetOwner(playerInstance);
 
-                // 🔹 Lấy PlayerActionUI từ trong playerInstance (dù nó nằm trong Canvas con)
-                playerActionUI = playerInstance.GetComponentInChildren<PlayerActionUI>(true);
+                // Ẩn UI lúc spawn
+                actionUI.Hide();
+
+                // Subscribe parry event
+                actionUI.OnParryAttempted += OnParryAttempted;
+
+                // Lưu tham chiếu UI vào player
+                playerInstance.ownUI = actionUI;
             }
         }
 
-
-        // 2. Spawn kẻ địch
-        if (enemySlots.Length > 0 && enemyPrefabs.Length > 0)
+        // Spawn Enemies
+        int enemyCount = Mathf.Min(enemySlots.Length, enemyPrefabs.Length);
+        for (int i = 0; i < enemyCount; i++)
         {
-            for (int i = 0; i < enemySlots.Length && i < enemyPrefabs.Length; i++)
-            {
-                if (enemySlots[i] != null && enemyPrefabs[i] != null)
-                {
-                    Character enemyInstance = Instantiate(enemyPrefabs[i], enemySlots[i].position, enemySlots[i].rotation);
-                    enemyInstance.transform.SetParent(enemySlots[i]);
-                    if (enemyInstance != null)
-                    {
-                        enemyInstance.isPlayer = false; // Thêm dòng này để đánh dấu là kẻ địch
-                        allCombatants.Add(enemyInstance);
-                        enemyInstance.initialPosition = enemySlots[i].position;
-                        enemyInstance.battleManager = this; // Gán tham chiếu BattleManager
+            Character enemyInstance = Instantiate(enemyPrefabs[i], enemySlots[i].position, enemySlots[i].rotation);
+            enemyInstance.transform.SetParent(enemySlots[i]);
 
-                        // Gán tham chiếu cho state machine
-                        CharacterStateMachine enemyStateMachine = enemyInstance.GetComponent<CharacterStateMachine>();
-                        if (enemyStateMachine != null)
-                        {
-                            enemyStateMachine.battleManager = this;
-                        }
-                    }
-                }
+            enemyInstance.isPlayer = false;
+            allCombatants.Add(enemyInstance);
+            enemyInstance.initialPosition = enemySlots[i].position;
+            enemyInstance.battleManager = this;
+
+            CharacterStateMachine enemyStateMachine = enemyInstance.GetComponent<CharacterStateMachine>();
+            if (enemyStateMachine != null)
+            {
+                enemyStateMachine.battleManager = this;
             }
         }
 
-        // Khởi tạo trạng thái ban đầu cho tất cả nhân vật
+        // Reset state ban đầu
         foreach (Character combatant in allCombatants)
         {
             if (combatant.stateMachine != null)
             {
                 combatant.stateMachine.SwitchState(combatant.stateMachine.waitingState);
-                combatant.actionGauge = 0; // Đặt lại thanh hành động
+                combatant.actionGauge = 0;
             }
         }
-
-        // Lắng nghe sự kiện từ PlayerActionUI
-        playerActionUI.OnParryAttempted += OnParryAttempted;
     }
 
-    // Coroutine để cập nhật thanh hành động mỗi frame
     private IEnumerator UpdateActionGauge()
     {
         yield return new WaitForSeconds(0.5f);
@@ -147,7 +132,11 @@ public class BattleManager : MonoBehaviour
                 if (someoneReady)
                 {
                     isProcessingTurn = true;
-                    var readyCharacters = allCombatants.Where(c => c.actionGauge >= 100 && c.isAlive).OrderByDescending(c => c.actionGauge).ToList();
+                    var readyCharacters = allCombatants
+                        .Where(c => c.actionGauge >= 100 && c.isAlive)
+                        .OrderByDescending(c => c.actionGauge)
+                        .ToList();
+
                     if (readyCharacters.Any())
                     {
                         AdvanceTurn(readyCharacters.First());
@@ -158,16 +147,12 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    // Trong BattleManager.cs
     public void AdvanceTurn(Character characterToAct)
     {
-        if (activeCharacter != null)
-        {
-            return;
-        }
+        if (activeCharacter != null) return;
 
         activeCharacter = characterToAct;
-        Debug.Log($"Kiểm tra nhân vật: {activeCharacter.gameObject.name}");
+        Debug.Log($"Đến lượt: {activeCharacter.gameObject.name}");
 
         activeCharacter.stateMachine.SwitchState(activeCharacter.stateMachine.waitingState);
 
@@ -176,19 +161,30 @@ public class BattleManager : MonoBehaviour
             turnOrderUI.HighlightActiveCharacter(activeCharacter);
         }
 
-        // --- SỬA ĐỔI PHẦN NÀY ---
         if (activeCharacter.isPlayer)
         {
-            playerActionUI.Show();
-            // Gọi phương thức để cập nhật UI kỹ năng và truyền danh sách kỹ năng
-            playerActionUI.SetupSkillUI(activeCharacter.skills);
+            // Ẩn hết UI của các player khác
+            foreach (var player in allCombatants.Where(c => c.isPlayer))
+            {
+                if (player.ownUI != null) player.ownUI.Hide();
+            }
+
+            // Hiện UI đúng cho player đang active
+            if (activeCharacter.ownUI != null)
+            {
+                activeCharacter.ownUI.Show();
+                Debug.Log("Trying to show UI: " + activeCharacter.ownUI.playerActionsPanel.activeInHierarchy);
+                activeCharacter.ownUI.SetupSkillUI(activeCharacter.skills);
+                activeCharacter.ownUI.SetActiveCharacter(activeCharacter);
+            }
+
         }
-        // --- KẾT THÚC SỬA ĐỔI ---
         else
         {
             StartCoroutine(EnemyTurn(activeCharacter));
         }
     }
+
     private IEnumerator EnemyTurn(Character enemy)
     {
         Debug.Log("Đến lượt của kẻ địch: " + enemy.gameObject.name);
@@ -201,35 +197,31 @@ public class BattleManager : MonoBehaviour
             enemyComponent.PerformTurn();
         }
 
-        // Bắt đầu coroutine để xử lý thanh parry
+        // Bắt đầu coroutine xử lý parry
         StartCoroutine(EnemyParryWindow(enemy));
-
-        // Wait for the enemy's turn to finish.
-        // The EndTurn call will be handled by the AttackingState,
-        // or by the Parry logic if successful.
     }
 
     private IEnumerator EnemyParryWindow(Character enemy)
     {
-        // Find player to parry
         Character player = allCombatants.FirstOrDefault(c => c.isPlayer && c.isAlive);
-        if (player == null)
-        {
-            // No player to parry, end coroutine
-            yield break;
-        }
+        if (player == null) yield break;
 
         float parryTimer = 0f;
         float attackDuration = 1.5f;
 
-        playerActionUI.ShowParryUI(true);
+        if (player.ownUI != null)
+            player.ownUI.ShowParryUI(true);
 
         while (parryTimer < attackDuration)
         {
             parryTimer += Time.deltaTime;
-            playerActionUI.parrySlider.value = parryTimer / attackDuration;
 
-            if (playerActionUI.parrySlider.value >= 0.6f && playerActionUI.parrySlider.value <= 0.9f)
+            if (player.ownUI != null && player.ownUI.parrySlider != null)
+            {
+                player.ownUI.parrySlider.value = parryTimer / attackDuration;
+            }
+
+            if (player.ownUI != null && player.ownUI.parrySlider.value >= 0.6f && player.ownUI.parrySlider.value <= 0.9f)
             {
                 player.isParryable = true;
             }
@@ -241,27 +233,23 @@ public class BattleManager : MonoBehaviour
             yield return null;
         }
 
-        playerActionUI.ShowParryUI(false);
+        if (player.ownUI != null)
+            player.ownUI.ShowParryUI(false);
     }
 
-    // Phương thức xử lý khi người chơi cố gắng parry
     public void OnParryAttempted()
     {
         Character player = allCombatants.FirstOrDefault(c => c.isPlayer && c.isAlive);
         if (player != null && player.isParryable)
         {
-            // Parry thành công!
             Debug.Log("Parry thành công!");
-            // Đặt lại cờ
             player.isParryable = false;
-            // Chuyển trạng thái của kẻ tấn công sang Interrupted
+
             if (activeCharacter != null)
             {
                 activeCharacter.stateMachine.SwitchState(activeCharacter.stateMachine.interruptedState);
             }
-            // Chuyển trạng thái của người chơi sang Parrying
             player.stateMachine.SwitchState(player.stateMachine.parryingState);
-            // Có thể thêm hiệu ứng ở đây
         }
         else
         {
@@ -277,7 +265,7 @@ public class BattleManager : MonoBehaviour
             if (character.stateMachine != null)
             {
                 character.stateMachine.SwitchState(character.stateMachine.waitingState);
-                character.actionGauge = 0; // Đặt lại thanh hành động
+                character.actionGauge = 0;
             }
             isProcessingTurn = false;
         }

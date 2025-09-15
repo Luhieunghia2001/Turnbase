@@ -47,6 +47,9 @@ public class Character : MonoBehaviour
 
     public bool isParryable;
 
+    public PlayerActionUI ownUI;
+
+
     public bool isAlive
     {
         get { return stats.currentHP > 0; }
