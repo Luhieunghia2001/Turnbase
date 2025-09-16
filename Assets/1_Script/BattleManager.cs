@@ -20,6 +20,8 @@ public class BattleManager : MonoBehaviour
 
     public TurnOrderUI turnOrderUI;
 
+    private Queue<ICommand> commandQueue = new Queue<ICommand>();
+
     void Start()
     {
         SetupBattle();
@@ -146,6 +148,22 @@ public class BattleManager : MonoBehaviour
             yield return null;
         }
     }
+
+    public void EnqueueCommand(ICommand command)
+    {
+        commandQueue.Enqueue(command);
+        StartCoroutine(ExecuteNextCommand());
+    }
+
+    private IEnumerator ExecuteNextCommand()
+    {
+        while (commandQueue.Count > 0)
+        {
+            var cmd = commandQueue.Dequeue();
+            yield return cmd.Execute();  
+        }
+    }
+
 
     public void AdvanceTurn(Character characterToAct)
     {
