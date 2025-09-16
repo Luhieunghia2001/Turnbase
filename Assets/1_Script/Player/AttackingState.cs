@@ -25,7 +25,7 @@ public class AttackingState : BaseState
         basicAttack.damage = stateMachine.character.stats.attack;
         basicAttack.skillType = SkillType.Damage;
 
-        ICommand command = new AttackCommand(stateMachine.character, target, basicAttack);
+        ICommand command = new AttackCommand(stateMachine.character, target, basicAttack); 
         stateMachine.character.StartCoroutine(ExecuteCommand(command));
 
         PlayerActionUI.Instance.Hide();
