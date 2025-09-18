@@ -2452,11 +2452,14 @@ MonoBehaviour:
   isPlayer: 0
   target: {fileID: 0}
   targetMarker: {fileID: 5109386890736583360}
-  animator: {fileID: 0}
+  animator: {fileID: 3378854915989972298}
   actionGauge: 0
+  skills: []
   initialPosition: {x: 0, y: 0, z: 0}
   battleManager: {fileID: 0}
   isParryable: 0
+  ownUI: {fileID: 0}
+  CanvasUIE: {fileID: 9185360619718995328}
 --- !u!114 &229363719538074653
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2838,7 +2841,7 @@ GameObject:
   - component: {fileID: 2747026850438202290}
   - component: {fileID: 4348905323062392274}
   m_Layer: 5
-  m_Name: Canvas
+  m_Name: CanvasUIE
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

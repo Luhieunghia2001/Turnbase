@@ -1603,6 +1603,37 @@ Transform:
   - {fileID: 4799858499368397220}
   m_Father: {fileID: 7874607692903921702}
   m_LocalEulerAnglesHint: {x: 39.753975, y: 3.3000588, z: 64.54378}
+--- !u!1 &3701549712326123331
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7115320167423591975}
+  m_Layer: 0
+  m_Name: CaneraLookArt
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7115320167423591975
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3701549712326123331}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.57, y: 2.5, z: -1.42}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 75167956460423509}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3799190348823302278
 GameObject:
   m_ObjectHideFlags: 0
@@ -4170,6 +4201,7 @@ Transform:
   - {fileID: 5599300510094288247}
   - {fileID: 4310835190596952014}
   - {fileID: 2326302347222718892}
+  - {fileID: 7115320167423591975}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &3378854915989972298

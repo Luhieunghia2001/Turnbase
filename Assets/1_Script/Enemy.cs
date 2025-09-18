@@ -5,7 +5,11 @@ using System.Collections;
 
 public class Enemy : Character
 {
-    // Phương thức này sẽ được BattleManager gọi khi đến lượt của kẻ địch
+    public static Enemy Instance { get; private set; }
+
+    public GameObject CanvasUIE;
+
+
     public void PerformTurn()
     {
         // 1. Tìm mục tiêu (chọn một người chơi ngẫu nhiên)
@@ -22,6 +26,7 @@ public class Enemy : Character
             // 3. Chuyển sang trạng thái tấn công
             // Mọi logic tấn công và kết thúc lượt sẽ được xử lý trong AttackingState
             stateMachine.SwitchState(stateMachine.attackingState);
+
         }
         else
         {
@@ -30,6 +35,28 @@ public class Enemy : Character
             // TODO: Thêm logic kết thúc trận chiến ở đây
             stateMachine.battleManager.EndTurn(this);
         }
+    }
+
+    void Awake()
+    {
+        if(Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    public void ShowUI()
+    {
+        CanvasUIE.SetActive(true);
+    }
+
+    public void HideUI()
+    {
+        CanvasUIE.SetActive(false);
     }
 
     // Phương thức tìm kiếm mục tiêu người chơi

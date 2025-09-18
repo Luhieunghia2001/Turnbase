@@ -129,13 +129,27 @@ public class PlayerActionUI : MonoBehaviour
             currentCharacter.stateMachine.SwitchState(currentCharacter.stateMachine.readyState);
             confirmButton.gameObject.SetActive(true);
         }
+
+        PlayerSkill.SetActive(false);
     }
 
     private void OnSkillClicked()
-    {
-        Debug.Log("Sử dụng Kỹ năng!");
-        PlayerSkill.SetActive(true);
-    }
+{
+    Debug.Log("Sử dụng Kỹ năng!");
+
+        confirmButton.gameObject.SetActive(false);
+
+        if (PlayerSkill.activeSelf == true)
+        {
+            // Nếu PlayerSkill đang hiển thị (true), thì tắt nó đi
+            PlayerSkill.SetActive(false);
+        }
+        else
+        {
+            // Nếu PlayerSkill đang tắt (false), thì bật nó lên
+            PlayerSkill.SetActive(true);
+        }
+}
 
     // IMPORTANT: uses currentCharacter (the owner) instead of battleManager.activeCharacter
     private void OnSkillButtonClicked(Skill selectedSkill)

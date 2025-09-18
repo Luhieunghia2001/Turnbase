@@ -264,6 +264,10 @@ public class BattleManager : MonoBehaviour
     {
         if (character == activeCharacter)
         {
+            Enemy.Instance.ShowUI();
+            Debug.LogWarning("Show Enemy UI");
+
+
             activeCharacter = null;
             if (character.stateMachine != null)
             {
