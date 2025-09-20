@@ -3,9 +3,9 @@ using UnityEngine;
 public class CameraAction : MonoBehaviour
 {
     public static CameraAction instance { get; private set; }
-    public Transform cameraTarget;
-    public Vector3 offset;
 
+    public Transform targetPoint;
+    public Vector3 offset;
 
     private void Awake()
     {
@@ -19,18 +19,25 @@ public class CameraAction : MonoBehaviour
         }
     }
 
-    void Start()
+    /// <summary>
+    /// Gọi để camera bám vào CameraTarget của nhân vật đang tới lượt.
+    /// </summary>
+    public void LookCameraAtTarget(Character character)
     {
-        //Invoke("LookCameraAtTarget", 2f);
+        if (character == null) return;
+
+        targetPoint = character.transform.Find("CameraTarget");
+
+        if (targetPoint != null)
+        {
+            transform.SetParent(targetPoint);
+            transform.localPosition = offset;
+            transform.localRotation = Quaternion.identity;
+        }
+        else
+        {
+            Debug.LogWarning($"{character.name} không có child 'CameraTarget'!");
+        }
     }
-
-
-
-    public void LookCameraAtTarget()
-    {
-        cameraTarget = GameObject.FindGameObjectWithTag("CameraTarget").transform;
-        transform.SetParent(cameraTarget);
-        transform.localPosition = offset;
-        transform.localRotation = Quaternion.identity;
-    }
+    
 }

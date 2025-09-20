@@ -149,7 +149,7 @@ public class BattleManager : MonoBehaviour
             yield return null;
         }
     }
-
+ 
     public void AdvanceTurn(Character characterToAct)
     {
         if (activeCharacter != null) return;
@@ -157,8 +157,7 @@ public class BattleManager : MonoBehaviour
         activeCharacter = characterToAct;
         Debug.Log($"Đến lượt: {activeCharacter.gameObject.name}");
 
-        CameraAction.instance.LookCameraAtTarget();
-
+        StartCoroutine(DelayedStartTurn(activeCharacter));
 
         activeCharacter.stateMachine.SwitchState(activeCharacter.stateMachine.waitingState);
 
@@ -169,27 +168,30 @@ public class BattleManager : MonoBehaviour
 
         if (activeCharacter.isPlayer)
         {
-            // Ẩn hết UI của các player khác
             foreach (var player in allCombatants.Where(c => c.isPlayer))
             {
                 if (player.ownUI != null) player.ownUI.Hide();
             }
 
-            // Hiện UI đúng cho player đang active
             if (activeCharacter.ownUI != null)
             {
                 activeCharacter.ownUI.ShowUI();
-                Debug.Log("Trying to show UI: " + activeCharacter.ownUI.playerActionsPanel.activeInHierarchy);
                 activeCharacter.ownUI.SetupSkillUI(activeCharacter.skills);
                 activeCharacter.ownUI.SetActiveCharacter(activeCharacter);
             }
-
         }
         else
         {
             StartCoroutine(EnemyTurn(activeCharacter));
         }
     }
+
+    private IEnumerator DelayedStartTurn(Character character)
+    {
+        yield return new WaitForSeconds(2f);
+        CameraAction.instance.LookCameraAtTarget(character);
+    }
+
 
     private IEnumerator EnemyTurn(Character enemy)
     {
@@ -231,8 +233,8 @@ public class BattleManager : MonoBehaviour
                 target.ownUI.parrySlider.value = parryTimer / attackDuration;
             }
 
-            if (target.ownUI != null && 
-                target.ownUI.parrySlider.value >= 0.6f && 
+            if (target.ownUI != null &&
+                target.ownUI.parrySlider.value >= 0.6f &&
                 target.ownUI.parrySlider.value <= 0.9f)
             {
                 target.isParryable = true;
@@ -295,4 +297,6 @@ public class BattleManager : MonoBehaviour
             allCombatants.Remove(character);
         }
     }
+    
+
 }
