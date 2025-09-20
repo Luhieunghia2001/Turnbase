@@ -33,7 +33,7 @@ public class SkillAttackingState : BaseState
             stateMachine.battleManager.EndTurn(user);
         }
 
-        PlayerActionUI.Instance.Hide();
+        //PlayerActionUI.Instance.Hide();
 
     }
 

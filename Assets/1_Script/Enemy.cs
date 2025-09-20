@@ -5,8 +5,6 @@ using System.Collections;
 
 public class Enemy : Character
 {
-    public static Enemy Instance { get; private set; }
-
     public GameObject CanvasUIE;
 
 
@@ -34,18 +32,6 @@ public class Enemy : Character
             Debug.Log("Không tìm thấy người chơi để tấn công. Trận chiến kết thúc!");
             // TODO: Thêm logic kết thúc trận chiến ở đây
             stateMachine.battleManager.EndTurn(this);
-        }
-    }
-
-    void Awake()
-    {
-        if(Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
         }
     }
 

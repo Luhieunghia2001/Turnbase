@@ -5,9 +5,7 @@ using System.Collections.Generic;
 using System.Collections;
 
 public class PlayerActionUI : MonoBehaviour
-{
-    public static PlayerActionUI Instance { get; private set; }
-    public Character Owner { get; private set; }
+{    public Character Owner { get; private set; }
 
     public BattleManager battleManager;
 
@@ -32,17 +30,6 @@ public class PlayerActionUI : MonoBehaviour
 
     private Skill selectedSkillToConfirm;
 
-    void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
 
     private void Start()
     {
@@ -100,6 +87,9 @@ public class PlayerActionUI : MonoBehaviour
     public void Hide()
     {
         playerActionsPanel.SetActive(false);
+
+        if (parryButton != null) parryButton.gameObject.SetActive(false);
+        if (parrySlider != null) parrySlider.gameObject.SetActive(false);
     }
 
     // Phương thức mới để hiển thị thanh slider và nút parry

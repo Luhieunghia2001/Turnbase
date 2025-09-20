@@ -4176,7 +4176,7 @@ GameObject:
   - component: {fileID: 6007067907109271698}
   - component: {fileID: 1482030567203108731}
   m_Layer: 0
-  m_Name: Player
+  m_Name: Player 1
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4248,7 +4248,7 @@ MonoBehaviour:
     defense: 153
     magicAttack: 154
     magicDefense: 139
-    agility: 101
+    agility: 66
   isPlayer: 1
   target: {fileID: 0}
   targetMarker: {fileID: 4111036390672808391}
@@ -4256,7 +4256,6 @@ MonoBehaviour:
   actionGauge: 0
   skills:
   - {fileID: 11400000, guid: d87ee4e013f2a8e4ba13fdc8485ec0b0, type: 2}
-  - {fileID: 11400000, guid: 46d0d6019c4b8b7439efe6f65af0d2b2, type: 2}
   - {fileID: 11400000, guid: ace86d8a32230714f86b111a0e7b0a53, type: 2}
   initialPosition: {x: 0, y: 0, z: 0}
   battleManager: {fileID: 0}

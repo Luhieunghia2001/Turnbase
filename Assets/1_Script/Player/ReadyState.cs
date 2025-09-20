@@ -14,6 +14,7 @@ public class ReadyState : BaseState
         stateMachine.character.animator.SetBool("IsIdle", true);
         Debug.Log(stateMachine.gameObject.name + " đã sẵn sàng hành động.");
 
+
         // Ẩn tất cả các marker trước khi vào trạng thái
         ShowTargetMarker(false);
 
